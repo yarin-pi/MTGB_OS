@@ -1,5 +1,7 @@
 #include "print.h"
 #include "idt.h"
+#include "ahci.h"
+#include "std.h"
 #define uint32_t unsigned int
 #define PAGE_PRESENT  (1 << 0)  // Bit 0
 #define PAGE_RW       (1 << 1)  // Bit 1
@@ -33,6 +35,7 @@ typedef struct {
 } page_directory_entry_t;
 
 page_table_entry_t page_table[1024] __attribute__((aligned(0x1000)));
+page_table_entry_t page_table2[1024] __attribute__((aligned(0x1000)));
 page_directory_entry_t page_directory[1024] __attribute__((aligned(0x1000)));
 void setup_identity_mapping();
 void map_page(void *physaddr, void *virtualaddr, unsigned int flags);
@@ -47,15 +50,41 @@ int _start()
     cr0 |= 0x80000000;
     
     asm volatile("mov %0, %%cr0" :: "r"(cr0));
-    map_page(0x400000,0x1000,0);
-     volatile uint32_t* test_address = (volatile uint32_t*)0x1000;
-    *test_address = 0xDEADBEEF; 
-    map_page(0xB8000, 0x3000,0);
+    
+    map_page(0xB8000, 0x30000,0);
     init_idt();
     load_idt();
-    char* test = "test";
-    asm("mov %0, %%ebx" : : "r"(test) : "ebx");
-    asm volatile("int $0"); 
+    uint32_t* ahci_add = find_ahci_controller();
+    if (!ahci_add)
+    {
+    char* err = "couldnt find ahci\n";
+    print(err);
+    }
+    map_page(ahci_add,0x20000,0);
+    HBA_MEM* abar = (HBA_MEM*)(0x20000);
+    
+    probe_port(abar);
+   
+    char* port1 = (char*)(abar) + 0x100;
+    HBA_PORT* port = (HBA_PORT*)(port1);
+    char num[32];	// Issue command
+	
+    port_rebase(port,0);
+    char maygodbewithme[512];
+    read(port,15,0,1,(uint16_t*)maygodbewithme);
+    write(port,17,0,1,(uint16_t*)maygodbewithme);
+    int j;
+    for(j = 0;j<512;j++)
+    {
+        char t[1];
+        t[0] = maygodbewithme[j]; //he was :)
+        print(t);
+
+    }
+    
+    
+    
+    
     while(1){}
     return 0;
 }
@@ -74,6 +103,19 @@ void setup_identity_mapping() {
     page_directory[0].user = 0;     
     page_directory[0].page_size = 0; 
     page_directory[0].table_addr = ((uint32_t)page_table) >> 12; 
+    int j;
+    for (j = 0; j < 1024; j++) {
+        page_table2[j].present = 1;  
+        page_table2[j].rw = 1;       
+        page_table2[j].user = 0;   
+        page_table2[j].frame_addr = j + 1024; 
+         
+    }
+    page_directory[1].present = 1;  
+    page_directory[1].rw = 1;       
+    page_directory[1].user = 0;     
+    page_directory[1].page_size = 0; 
+    page_directory[1].table_addr = ((uint32_t)page_table2) >> 12; 
 }
 void map_page(void *physaddr, void *virtualaddr, unsigned int flags) {
     
