@@ -4,7 +4,7 @@ typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
 #define SECTOR_SIZE 512
-
+#include "std.h"
 typedef struct {
     uint8_t  jump_code[3];
     char     oem_name[8];
@@ -37,12 +37,15 @@ typedef struct {
     uint16_t create_time;
     uint16_t create_date;
     uint16_t last_access_date;
-    uint16_t first_cluster_high; // always 0 for FAT16
+    uint16_t cluster_index;  // Single 16-bit cluster index for FAT16
     uint16_t write_time;
     uint16_t write_date;
-    uint16_t first_cluster_low;  
     uint32_t file_size;          // File size in bytes
 } __attribute__((packed)) DirEntry;
+
+#define ENTRY_AVAILABLE 0x00
+#define ENTRY_ERASED 0xe5
+
 
 uint32_t GetTotalSectorCount(uint8_t* image);
 uint32_t GetMetaDataSector(uint8_t* image);
@@ -57,17 +60,19 @@ DirEntry* GetRootDirectory(uint8_t* image);
 
 
 uint8_t *FatAllocImage(uint32_t iSize);
-bool FatInitImage(uint8_t* image,uint8_t* BootSector);
+bool FatInitImage(uint8_t* image,uint8_t* bs);
 
 
 void FatSplitPath(uint8_t dstName[8], uint8_t dstExt[3], const char *path);
 uint16_t FatFindFreeCluster(uint8_t* image);
 void FatUpdateCluster(uint8_t* image, uint32_t clusterIndex, uint16_t value);
 DirEntry* FatFindFreeRootEntry(uint8_t* image);
-void FatUpdateDirEntry(DirEntry *entry, uint16_t clusterIndex, const uint8_t name[8], const uint8_t ext[3], uint32_t file_size);
+void FatUpdateDirEntry(DirEntry *entry, uint16_t clusterIndex, const uint8_t name[8], const uint8_t ext[3], uint32_t fileSize);
 void FatRemoveDirEntry(DirEntry *entry);
 uint16_t FatAddData(uint8_t* image, void *data);
 void FatRemoveData(uint8_t* image, uint32_t rootClusterIndex);
 DirEntry* FatAddFile(uint8_t* image, const char *path, const void *data, uint32_t size);
 void FatRemoveFile(uint8_t* image, DirEntry *entry);
+uint16_t GetClusterIndex(DirEntry *entry);
+
 #endif FS_H

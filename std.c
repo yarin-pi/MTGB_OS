@@ -68,3 +68,31 @@ void *memset(void *ptr, int value, int num)
     }
     return ptr;
 }
+
+uint32_t strlen(const char *str) 
+{
+    uint len = 0;
+    while (str[len] != '\0') 
+    {
+        len++;
+    }
+    return len;
+}
+
+char toupper(char c)
+ {
+    if (c >= 'a' && c <= 'z') 
+    {
+        return c - ('a' - 'A');
+    }
+    return c;
+}
+void memcpy(void *dest, const void *src, uint count) 
+{
+    char *d = (char *)dest;
+    const char *s = (const char *)src;
+    for (uint i = 0; i < count; ++i) 
+    {
+        d[i] = s[i];
+    }
+}
