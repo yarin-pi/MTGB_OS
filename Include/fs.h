@@ -26,7 +26,7 @@ typedef struct {
     uint32_t volume_id;
     char     volume_label[11];
     char     fs_type[8];
-} BootSector;
+} __attribute__((packed)) BootSector;
 
 typedef struct {
     char     filename[8];  
@@ -42,6 +42,32 @@ typedef struct {
     uint16_t write_date;
     uint16_t first_cluster_low;  
     uint32_t file_size;          // File size in bytes
-} DirEntry;
+} __attribute__((packed)) DirEntry;
 
+uint32_t GetTotalSectorCount(uint8_t* image);
+uint32_t GetMetaDataSector(uint8_t* image);
+uint32_t GetClusterCount(uint8_t* image);
+uint32_t GetImageSize(uint8_t* image);
+
+uint16_t* GetTable(uint8_t* image,uint32_t fatIndex);
+uint16_t GetClusterValue(uint8_t* image,uint32_t fatIndex, uint32_t clusterIndex);
+void SetClusterValue(uint8_t* image,uint32_t fatIndex, uint32_t clusterIndex, uint16_t value);
+uint32_t GetClusterOffset(uint8_t* image,uint32_t clusterIndex);
+DirEntry* GetRootDirectory(uint8_t* image);
+
+
+uint8_t *FatAllocImage(uint32_t iSize);
+bool FatInitImage(uint8_t* image,uint8_t* BootSector);
+
+
+void FatSplitPath(uint8_t dstName[8], uint8_t dstExt[3], const char *path);
+uint16_t FatFindFreeCluster(uint8_t* image);
+void FatUpdateCluster(uint8_t* image, uint32_t clusterIndex, uint16_t value);
+DirEntry* FatFindFreeRootEntry(uint8_t* image);
+void FatUpdateDirEntry(DirEntry *entry, uint16_t clusterIndex, const uint8_t name[8], const uint8_t ext[3], uint32_t file_size);
+void FatRemoveDirEntry(DirEntry *entry);
+uint16_t FatAddData(uint8_t* image, void *data);
+void FatRemoveData(uint8_t* image, uint32_t rootClusterIndex);
+DirEntry* FatAddFile(uint8_t* image, const char *path, const void *data, uint32_t size);
+void FatRemoveFile(uint8_t* image, DirEntry *entry);
 #endif FS_H
