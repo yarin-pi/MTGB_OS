@@ -71,7 +71,7 @@ void *memset(void *ptr, int value, int num)
 
 uint32_t strlen(const char *str) 
 {
-    uint len = 0;
+    uint32_t len = 0;
     while (str[len] != '\0') 
     {
         len++;
@@ -87,11 +87,11 @@ char toupper(char c)
     }
     return c;
 }
-void memcpy(void *dest, const void *src, uint count) 
+void memcpy(void *dest, const void *src, uint32_t count) 
 {
     char *d = (char *)dest;
     const char *s = (const char *)src;
-    for (uint i = 0; i < count; ++i) 
+    for (uint32_t i = 0; i < count; ++i) 
     {
         d[i] = s[i];
     }

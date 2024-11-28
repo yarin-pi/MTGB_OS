@@ -69,10 +69,8 @@ void FatUpdateCluster(uint8_t* image, uint32_t clusterIndex, uint16_t value);
 DirEntry* FatFindFreeRootEntry(uint8_t* image);
 void FatUpdateDirEntry(DirEntry *entry, uint16_t clusterIndex, const uint8_t name[8], const uint8_t ext[3], uint32_t fileSize);
 void FatRemoveDirEntry(DirEntry *entry);
-uint16_t FatAddData(uint8_t* image, void *data);
+uint16_t FatAddData(uint8_t* image, void *data, uint32_t size);
 void FatRemoveData(uint8_t* image, uint32_t rootClusterIndex);
 DirEntry* FatAddFile(uint8_t* image, const char *path, const void *data, uint32_t size);
 void FatRemoveFile(uint8_t* image, DirEntry *entry);
-uint16_t GetClusterIndex(DirEntry *entry);
-
 #endif FS_H

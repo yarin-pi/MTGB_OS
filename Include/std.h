@@ -17,6 +17,6 @@ void *memset(void *ptr, int value, int num);
 uint32_t inl(uint16_t port);
 uint32_t strlen(const char *str);
 char toupper(char c);
-void memcpy(void *dest, const void *src, uint count);
+void memcpy(void *dest, const void *src, uint32_t count);
 
 #endif STD_H
