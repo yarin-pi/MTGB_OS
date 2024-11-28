@@ -2,7 +2,12 @@
 
 uint32_t GetTotalSectorCount(uint8_t *image)
 {
-    BootSector *bpb = (BootSector *)image;
+    uint8_t tmp[512];
+    read_ahci(0,0,0,1,(uint16_t*)tmp);
+    uint8_t* ptr = tmp + 0xb;
+    BootSector* bpb = (BootSector*)(ptr);
+    
+
 
     if (bpb->short_sectors_count)
     {
@@ -15,7 +20,10 @@ uint32_t GetTotalSectorCount(uint8_t *image)
 }
 uint32_t GetMetaDataSector(uint8_t *image)
 {
-    BootSector *bpb = (BootSector *)image;
+    uint8_t tmp[512];
+    read_ahci(0,0,0,1,(uint16_t*)tmp);
+    uint8_t* ptr = tmp + 0xb;
+    BootSector* bpb = (BootSector*)(ptr);
 
     return (bpb->reserved_sectors +
             bpb->num_fats * bpb->fat_size_sectors +
@@ -23,7 +31,10 @@ uint32_t GetMetaDataSector(uint8_t *image)
 }
 uint32_t GetClusterCount(uint8_t *image)
 {
-    BootSector *bpb = (BootSector *)image;
+    uint8_t tmp[512];
+    read_ahci(0,0,0,1,(uint16_t*)tmp);
+    uint8_t* ptr = tmp + 0xb;
+    BootSector* bpb = (BootSector*)(ptr);
 
     uint32_t totalSectorCount = GetTotalSectorCount(image);
     uint32_t metaSectorCount = GetMetaSectorCount(image);
@@ -34,7 +45,10 @@ uint32_t GetClusterCount(uint8_t *image)
 
 uint32_t GetImageSize(uint8_t *image)
 {
-    BootSector *bpb = (BootSector *)image;
+    uint8_t tmp[512];
+    read_ahci(0,0,0,1,(uint16_t*)tmp);
+    uint8_t* ptr = tmp + 0xb;
+    BootSector* bpb = (BootSector*)(ptr);
 
     return GetTotalSectorCount(image) * bpb->bytes_per_sector;
 }

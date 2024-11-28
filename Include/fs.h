@@ -5,6 +5,7 @@ typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
 #define SECTOR_SIZE 512
 #include "std.h"
+#include "ahci.h"
 typedef struct {
     uint8_t  jump_code[3];
     char     oem_name[8];
@@ -26,7 +27,7 @@ typedef struct {
     uint32_t volume_id;
     char     volume_label[11];
     char     fs_type[8];
-} __attribute__((packed)) BootSector;
+} BootSector; //add __attribute__((packed))
 
 typedef struct {
     char     filename[8];  
@@ -41,7 +42,7 @@ typedef struct {
     uint16_t write_time;
     uint16_t write_date;
     uint32_t file_size;          // File size in bytes
-} __attribute__((packed)) DirEntry;
+} DirEntry; //add __attribute__((packed))
 
 #define ENTRY_AVAILABLE 0x00
 #define ENTRY_ERASED 0xe5

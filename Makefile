@@ -9,7 +9,8 @@ CFLAGS = -ffreestanding -Wall -w -Wextra -I./Include
 LDFLAGS = -T linker.ld --oformat=binary
 
 # List of object files
-OBJS = kl.o print.o idt.o std.o ahci.o
+SRCS = $(wildcard *.c)
+OBJS = $(SRCS:.c=.o)
 
 # Output binary name
 OUTPUT = kernel.bin
