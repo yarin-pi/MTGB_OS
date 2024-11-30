@@ -3,6 +3,7 @@
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
+typedef unsigned long long uint64_t
 #define SECTOR_SIZE 512
 #include "std.h"
 #include "ahci.h"
@@ -48,30 +49,30 @@ typedef struct {
 #define ENTRY_ERASED 0xe5
 
 
-uint32_t GetTotalSectorCount(uint8_t* image);
-uint32_t GetMetaDataSector(uint8_t* image);
-uint32_t GetClusterCount(uint8_t* image);
-uint32_t GetImageSize(uint8_t* image);
+uint32_t GetTotalSectorCount();
+uint32_t GetMetaDataSector();
+uint32_t GetClusterCount();
+uint32_t GetImageSize();
 
-uint16_t* GetTable(uint8_t* image,uint32_t fatIndex);
-uint16_t GetClusterValue(uint8_t* image,uint32_t fatIndex, uint32_t clusterIndex);
-void SetClusterValue(uint8_t* image,uint32_t fatIndex, uint32_t clusterIndex, uint16_t value);
-uint32_t GetClusterOffset(uint8_t* image,uint32_t clusterIndex);
-DirEntry* GetRootDirectory(uint8_t* image);
+uint32_t GetTable(uint32_t fatIndex);
+uint16_t GetClusterValue(uint32_t fatIndex, uint32_t clusterIndex);
+void SetClusterValue(uint32_t fatIndex, uint32_t clusterIndex, uint16_t value);
+uint32_t GetClusterOffset(uint32_t clusterIndex);
+uint32_t GetRootDirectory();
 
 
-uint8_t *FatAllocImage(uint32_t iSize);
-bool FatInitImage(uint8_t* image,uint8_t* bs);
+
+bool FatInitImage(uint8_t* bs);
 
 
 void FatSplitPath(uint8_t dstName[8], uint8_t dstExt[3], const char *path);
-uint16_t FatFindFreeCluster(uint8_t* image);
-void FatUpdateCluster(uint8_t* image, uint32_t clusterIndex, uint16_t value);
-DirEntry* FatFindFreeRootEntry(uint8_t* image);
+uint16_t FatFindFreeCluster();
+void FatUpdateCluster(uint32_t clusterIndex, uint16_t value);
+uint32_t FatFindFreeRootEntry();
 void FatUpdateDirEntry(DirEntry *entry, uint16_t clusterIndex, const uint8_t name[8], const uint8_t ext[3], uint32_t fileSize);
 void FatRemoveDirEntry(DirEntry *entry);
-uint16_t FatAddData(uint8_t* image, void *data, uint32_t size);
-void FatRemoveData(uint8_t* image, uint32_t rootClusterIndex);
-DirEntry* FatAddFile(uint8_t* image, const char *path, const void *data, uint32_t size);
-void FatRemoveFile(uint8_t* image, DirEntry *entry);
+uint16_t FatAddData( void *data, uint32_t size);
+void FatRemoveData( uint32_t rootClusterIndex);
+DirEntry* FatAddFile(const char *path, const void *data, uint32_t size);
+void FatRemoveFile(DirEntry *entry);
 #endif FS_H

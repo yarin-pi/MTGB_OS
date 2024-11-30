@@ -19,4 +19,5 @@ uint32_t strlen(const char *str);
 char toupper(char c);
 void memcpy(void *dest, const void *src, uint32_t count);
 
+
 #endif STD_H
