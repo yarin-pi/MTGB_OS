@@ -272,8 +272,8 @@ typedef volatile struct tagHBA_MEM
 	HBA_PORT	ports[1];	
 } HBA_MEM;
 void port_rebase(HBA_PORT *port, int portno);
-int write(HBA_PORT *port, uint32_t startl, uint32_t starth, uint32_t count, uint16_t *buf);
-int read(HBA_PORT *port, uint32_t startl, uint32_t starth, uint32_t count, uint16_t *buf);
+int write_ahci(HBA_PORT *port, uint32_t startl, uint32_t starth, uint32_t count, uint16_t *buf);
+int read_ahci(HBA_PORT *port, uint32_t startl, uint32_t starth, uint32_t count, uint16_t *buf);
 uint32_t* find_ahci_controller();
 void probe_port(HBA_MEM *abar);
 #endif AHCI_H

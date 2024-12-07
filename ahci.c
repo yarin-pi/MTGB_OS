@@ -1,6 +1,6 @@
 #include "ahci.h"
 #include "std.h" 
-
+#include "vm.h"
 
 
 int is_known_ahci(uint16_t vendor_id, uint16_t device_id);
@@ -243,7 +243,7 @@ int find_cmdslot(HBA_PORT *port)
 	return -1;
 }
 
-int read(HBA_PORT *port, uint32_t startl, uint32_t starth, uint32_t count, uint16_t *buf)
+int read_ahci(HBA_PORT *port, uint32_t startl, uint32_t starth, uint32_t count, uint16_t *buf)
 {
 	port->is = (uint32_t) -1;		// Clear pending interrupt bits
 	int spin = 0; // Spin lock timeout counter
@@ -253,6 +253,7 @@ int read(HBA_PORT *port, uint32_t startl, uint32_t starth, uint32_t count, uint1
 	//down
 	HBA_CMD_HEADER *cmdheader = (HBA_CMD_HEADER*)port->clb;
 	cmdheader += slot;
+	
 	cmdheader->cfl = sizeof(FIS_REG_H2D)/sizeof(uint32_t);	// Command FIS size
 	cmdheader->w = 0;		// Read from device
 	cmdheader->prdtl = (uint16_t)((count-1)>>4) + 1;	// PRDT entries count
@@ -340,7 +341,7 @@ int read(HBA_PORT *port, uint32_t startl, uint32_t starth, uint32_t count, uint1
 
 	return 1;
 }
-int write(HBA_PORT *port, uint32_t startl, uint32_t starth, uint32_t count, uint16_t *buf)
+int write_ahci(HBA_PORT *port, uint32_t startl, uint32_t starth, uint32_t count, uint16_t *buf)
 {
 	port->is = (uint32_t) -1;		// Clear pending interrupt bits
 	int spin = 0; // Spin lock timeout counter
