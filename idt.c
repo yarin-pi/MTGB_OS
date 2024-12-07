@@ -17,6 +17,7 @@ void init_idt() {
     // Set IDT entry 0 to point to write_string function
       // 0x08 is the code segment selector, 0x8E for interrupt gate
 }
+
 void load_idt() {
     asm volatile("lidt (%0)" : : "r"(&idt_descriptor));
 }

@@ -1,18 +1,15 @@
 #ifndef FS_H
 #define FS_H
-typedef unsigned char uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned int uint32_t;
-typedef unsigned long long uint64_t
+
 #define SECTOR_SIZE 512
 #include "std.h"
 #include "ahci.h"
 typedef struct {
-    uint8_t  jump_code[3];
-    char     oem_name[8];
+    char jmp[3];
+    char blabla[8];
     uint16_t bytes_per_sector;
     uint8_t  sectors_per_cluster;
-    uint16_t reserved_sectors;
+    uint8_t reserved_sectors;
     uint8_t  num_fats;
     uint16_t root_entries;
     uint16_t short_sectors_count; // if zero check total_sectors_long
@@ -28,7 +25,7 @@ typedef struct {
     uint32_t volume_id;
     char     volume_label[11];
     char     fs_type[8];
-} BootSector; //add __attribute__((packed))
+} __attribute__((packed)) BootSector; //add __attribute__((packed))
 
 typedef struct {
     char     filename[8];  
@@ -39,14 +36,14 @@ typedef struct {
     uint16_t create_time;
     uint16_t create_date;
     uint16_t last_access_date;
-    uint16_t cluster_index;  // Single 16-bit cluster index for FAT16
+    uint16_t low_cluster_index;  // Single 16-bit cluster index for FAT16
     uint16_t write_time;
     uint16_t write_date;
-    uint32_t file_size;          // File size in bytes
-} DirEntry; //add __attribute__((packed))
+    uint32_t file_size;    
+    uint16_t cluster_index;      // File size in bytes
+} __attribute__((packed)) DirEntry; //add __attribute__((packed))
 
-#define ENTRY_AVAILABLE 0x00
-#define ENTRY_ERASED 0xe5
+
 
 
 uint32_t GetTotalSectorCount();
@@ -62,17 +59,17 @@ uint32_t GetRootDirectory();
 
 
 
-bool FatInitImage(uint8_t* bs);
+bool FatInitImage(HBA_PORT* port);
 
 
 void FatSplitPath(uint8_t dstName[8], uint8_t dstExt[3], const char *path);
 uint16_t FatFindFreeCluster();
 void FatUpdateCluster(uint32_t clusterIndex, uint16_t value);
 uint32_t FatFindFreeRootEntry();
-void FatUpdateDirEntry(DirEntry *entry, uint16_t clusterIndex, const uint8_t name[8], const uint8_t ext[3], uint32_t fileSize);
-void FatRemoveDirEntry(DirEntry *entry);
+void FatUpdateDirEntry(uint32_t entry, uint16_t clusterIndex, const uint8_t name[8], const uint8_t ext[3], uint32_t fileSize);
+void FatRemoveDirEntry(uint32_t entry);
 uint16_t FatAddData( void *data, uint32_t size);
 void FatRemoveData( uint32_t rootClusterIndex);
-DirEntry* FatAddFile(const char *path, const void *data, uint32_t size);
-void FatRemoveFile(DirEntry *entry);
+uint32_t FatAddFile(const char *path, const void *data, uint32_t size);
+void FatRemoveFile(uint32_t entry);
 #endif FS_H
