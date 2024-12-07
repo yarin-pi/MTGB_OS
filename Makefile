@@ -3,24 +3,32 @@ CC = i686-elf-gcc
 LD = i686-elf-ld
 
 # Compiler flags
-CFLAGS = -ffreestanding -Wall -w -Wextra -I./Include
+CFLAGS = -ffreestanding -Wall -w -Wextra -I./Include -g
 
 # Linker flags
-LDFLAGS = -T linker.ld --oformat=binary
+LDFLAGS_BIN = -T linker.ld --oformat=binary
+LDFLAGS_ELF = -T linker.ld
 
-# List of object files
+# List of source files
 SRCS = $(wildcard *.c)
-OBJS = $(SRCS:.c=.o)
 
-# Output binary name
-OUTPUT = kernel.bin
+# Ensure kl.c is the first object file
+OBJS = kl.o $(filter-out kl.o, $(SRCS:.c=.o))
 
-# Default target
-all: $(OUTPUT)
+# Output file names
+OUTPUT_BIN = kernel.bin
+OUTPUT_ELF = kernel.elf
 
-# Rule to build the kernel binary
-$(OUTPUT): $(OBJS)
-	$(LD) $(LDFLAGS) -o $@ $(OBJS)
+# Default target: build both binary and ELF
+all: $(OUTPUT_BIN) $(OUTPUT_ELF)
+
+# Rule to build the binary file
+$(OUTPUT_BIN): $(OBJS)
+	$(LD) $(LDFLAGS_BIN) -o $@ $(OBJS)
+
+# Rule to build the ELF file with debug symbols
+$(OUTPUT_ELF): $(OBJS)
+	$(LD) $(LDFLAGS_ELF) -o $@ $(OBJS)
 
 # Pattern rule for compiling .c files to .o files
 %.o: %.c
@@ -28,7 +36,7 @@ $(OUTPUT): $(OBJS)
 
 # Clean up generated files
 clean:
-	rm -f $(OBJS) $(OUTPUT)
+	rm -f $(OBJS) $(OUTPUT_BIN) $(OUTPUT_ELF)
 
 # Rebuild everything
 rebuild: clean all

@@ -91,8 +91,10 @@ void memcpy(void *dest, const void *src, uint32_t count)
 {
     char *d = (char *)dest;
     const char *s = (const char *)src;
-    for (uint32_t i = 0; i < count; ++i) 
+    uint32_t i;
+    for (i = 0; i < count; ++i) 
     {
         d[i] = s[i];
     }
+    
 }
