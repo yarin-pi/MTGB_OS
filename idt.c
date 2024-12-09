@@ -21,3 +21,15 @@ void init_idt() {
 void load_idt() {
     asm volatile("lidt (%0)" : : "r"(&idt_descriptor));
 }
+void dummy()
+{
+    return;
+}
+void set_dummy()
+{
+    int i;
+    for (i = 0;i< IDT_SIZE;i++)
+    {
+        set_idt_entry(i,dummy,0x08,0x8e);
+    }
+}

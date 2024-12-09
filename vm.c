@@ -45,3 +45,14 @@ void map_page(void *physaddr, void *virtualaddr, unsigned int flags) {
     page_table[ptindex].user = 0;
 
 }
+void page_fault_handler(uint32_t error_code) {
+    uint32_t faulting_address;
+
+    asm volatile("mov %%cr2, %0" : "=r"(faulting_address)); // Read faulting address from CR2
+
+    // Log the fault details
+    print("Page Fault Handler Invoked!\n");
+    
+
+    
+}

@@ -4,6 +4,7 @@
 #include "std.h"
 #include "fs.h"
 #include "vm.h"
+#include "clock.h"
 #define uint32_t unsigned int
 
 
@@ -24,6 +25,7 @@ int _start()
     map_page(0xB8000, 0x30000,0);
     init_idt();
     load_idt();
+    set_dummy();
     uint32_t* ahci_add = find_ahci_controller();
     if (!ahci_add)
     {
@@ -40,10 +42,10 @@ int _start()
     char num[32];	// Issue command
 	
     port_rebase(port,0);
+    set_idt_entry(14,(uint32_t)page_fault_handler,0x08,0x8e);
+    
    
     
-    FatInitImage(port);
-    FatAddFile("/hi.txt","messi better",18);
     
     
     
