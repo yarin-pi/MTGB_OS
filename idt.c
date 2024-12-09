@@ -13,6 +13,12 @@ void set_idt_entry(int vector, uint32_t handler, uint16_t selector, uint8_t type
 void init_idt() {
     idt_descriptor.limit = (sizeof(idt_entry_t) * IDT_SIZE) - 1;
     idt_descriptor.base = (uint32_t)&idt;
+    set_idt_entry(
+        33,                         // Vector number for keyboard IRQ1
+        (uint32_t)keyboard_handler, // Address of the handler
+        0x08,                       // Code segment selector
+        0x8E                        // Type attribute: present, privilege 0, 32-bit interrupt gate
+    );
 
     // Set IDT entry 0 to point to write_string function
       // 0x08 is the code segment selector, 0x8E for interrupt gate
