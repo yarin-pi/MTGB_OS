@@ -22,6 +22,7 @@ int _start()
     map_page(0xB8000, 0x30000, 0);
     init_idt();
     load_idt();
+    set_dummy();
     uint32_t *ahci_add = find_ahci_controller();
     if (!ahci_add)
     {
@@ -38,12 +39,14 @@ int _start()
     char num[32]; // Issue command
 
     port_rebase(port, 0);
-    FatInitImage(port);
-    FatAddFile("/hi.txt", "messi better", 18);
 
+    set_idt_entry(
+        33,                         // Vector number for keyboard IRQ1
+        (uint32_t)keyboard_handler, // Address of the handler
+        0x08,                       // Code segment selector
+        0x8E                        // Type attribute: present, privilege 0, 32-bit interrupt gate
+    );
     enable_keyboard_interrupt();
-    asm volatile("sti"); // Enable interrupts globally
-
     while (1)
     {
     }

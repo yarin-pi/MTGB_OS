@@ -24,3 +24,7 @@ typedef struct
     uint32_t base;  // Address of the first IDT entry
 } __attribute__((packed)) idt_ptr_t;
 #endif IDT_H
+
+void dummy();
+
+void set_dummy();

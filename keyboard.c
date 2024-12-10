@@ -1,6 +1,6 @@
 #include "keyboard.h"
 
-void keyboard_handler()
+__attribute__((interrupt)) void keyboard_handler()
 {
     uint8_t scancode = inl(KEYBOARD_DATA_PORT);
 
@@ -12,7 +12,6 @@ void keyboard_handler()
 
     outl(PIC1_COMMAND, PIC_EOI);
 }
-
 uint8_t scancode_to_char(uint8_t scancode)
 {
     static char keymap[128] = {

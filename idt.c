@@ -1,7 +1,8 @@
 #include "idt.h"
 idt_entry_t idt[IDT_SIZE];
 idt_ptr_t idt_descriptor;
-void set_idt_entry(int vector, uint32_t handler, uint16_t selector, uint8_t type_attr) {
+void set_idt_entry(int vector, uint32_t handler, uint16_t selector, uint8_t type_attr)
+{
     idt[vector].offset_low = handler & 0xFFFF;
     idt[vector].selector = selector;
     idt[vector].zero = 0;
@@ -10,20 +11,29 @@ void set_idt_entry(int vector, uint32_t handler, uint16_t selector, uint8_t type
 }
 
 // Initialize the first entry to point to write_string function
-void init_idt() {
+void init_idt()
+{
     idt_descriptor.limit = (sizeof(idt_entry_t) * IDT_SIZE) - 1;
     idt_descriptor.base = (uint32_t)&idt;
-    set_idt_entry(
-        33,                         // Vector number for keyboard IRQ1
-        (uint32_t)keyboard_handler, // Address of the handler
-        0x08,                       // Code segment selector
-        0x8E                        // Type attribute: present, privilege 0, 32-bit interrupt gate
-    );
 
     // Set IDT entry 0 to point to write_string function
-      // 0x08 is the code segment selector, 0x8E for interrupt gate
+    // 0x08 is the code segment selector, 0x8E for interrupt gate
 }
 
-void load_idt() {
+void dummy()
+{
+    return;
+}
+void set_dummy()
+{
+    int i;
+    for (i = 0; i < IDT_SIZE; i++)
+    {
+        set_idt_entry(i, dummy, 0x08, 0x8e);
+    }
+}
+
+void load_idt()
+{
     asm volatile("lidt (%0)" : : "r"(&idt_descriptor));
 }
