@@ -6,12 +6,19 @@
 #define PIC1_COMMAND 0x20
 #define PIC1_DATA 0x21
 #define PIC_EOI 0x20
-
+struct interrupt_frame
+{
+    uint32_t ip;
+    uint32_t cs;
+    uint32_t flags;
+    uint32_t sp;
+    uint32_t ss;
+} __attribute__((packed));
 // IRQ1 vector
 #define IRQ1_VECTOR 0x21
 
-void keyboard_handler();                    // when key is pressed function is called to handle the pressed event
-uint8_t scancode_to_char(uint8_t scancode); // translate the pressed key to a character
-void enable_keyboard_interrupt();           // enable the option to recive the keyboard press interrupt
+void keyboard_handler(struct interrupt_frame *frame); // when key is pressed function is called to handle the pressed event
+uint8_t scancode_to_char(uint8_t scancode);           // translate the pressed key to a character
+void enable_keyboard_interrupt();                     // enable the option to recive the keyboard press interrupt
 
 #endif KEYBOARD_H

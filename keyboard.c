@@ -1,8 +1,8 @@
 #include "keyboard.h"
 
-__attribute__((interrupt)) void keyboard_handler()
+__attribute__((interrupt)) void keyboard_handler(struct interrupt_frame *frame)
 {
-    uint8_t scancode = inl(KEYBOARD_DATA_PORT);
+    uint8_t scancode = inb(KEYBOARD_DATA_PORT);
 
     uint8_t c = scancode_to_char(scancode);
     if (c != 0)
@@ -10,11 +10,11 @@ __attribute__((interrupt)) void keyboard_handler()
         print_char(c);
     }
 
-    outl(PIC1_COMMAND, PIC_EOI);
+    outb(PIC1_COMMAND, PIC_EOI);
 }
 uint8_t scancode_to_char(uint8_t scancode)
 {
-    static char keymap[128] = {
+    char keymap[128] = {
         0,
         27,
         '1',
@@ -83,7 +83,7 @@ uint8_t scancode_to_char(uint8_t scancode)
 
 void enable_keyboard_interrupt()
 {
-    uint8_t mask = inl(PIC1_DATA);
+    uint8_t mask = inb(PIC1_DATA);
     mask &= ~(1 << 1); // Clear bit 1 to enable IRQ1
-    outl(PIC1_DATA, mask);
+    outb(PIC1_DATA, mask);
 }

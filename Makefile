@@ -3,7 +3,7 @@ CC = i686-elf-gcc
 LD = i686-elf-ld
 
 # Compiler flags
-CFLAGS = -ffreestanding -Wall -w -Wextra -I./Include -g -gdwarf-4
+CFLAGS = -ffreestanding -Wall -w -Wextra -I./Include -g -gdwarf-4 -mgeneral-regs-only
 
 # Linker flags
 LDFLAGS_BIN = -T linker.ld --oformat=binary
