@@ -6,7 +6,6 @@
 #include "vm.h"
 #include "keyboard.h"
 #define uint32_t unsigned int
-
 int _start()
 {
     void *page_directory = setup_identity_mapping();
@@ -22,7 +21,7 @@ int _start()
     map_page(0xB8000, 0x30000, 0);
     init_idt();
     load_idt();
-    set_dummy();
+
     uint32_t *ahci_add = find_ahci_controller();
     if (!ahci_add)
     {
@@ -39,13 +38,21 @@ int _start()
     char num[32]; // Issue command
 
     port_rebase(port, 0);
-
+    for (int i = 0; i < IDT_SIZE; i++)
+    {
+        if (i != 33)
+        { // Don't overwrite the keyboard handler
+            set_idt_entry(i, (uint32_t)unhandled_interrupt_handler, 0x08, 0x8E);
+        }
+    }
     set_idt_entry(
         33,                         // Vector number for keyboard IRQ1
         (uint32_t)keyboard_handler, // Address of the handler
         0x08,                       // Code segment selector
         0x8E                        // Type attribute: present, privilege 0, 32-bit interrupt gate
     );
+
+    asm volatile("sti");
     enable_keyboard_interrupt();
     while (1)
     {
