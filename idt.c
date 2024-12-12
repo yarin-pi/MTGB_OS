@@ -20,19 +20,11 @@ void init_idt()
     // 0x08 is the code segment selector, 0x8E for interrupt gate
 }
 
-void dummy()
+void unhandled_interrupt_handler(struct interrupt_frame *frame)
 {
-    return;
+    // Print an error message or halt the system
+    print("Unhandled interrupt!\n");
 }
-void set_dummy()
-{
-    int i;
-    for (i = 0; i < IDT_SIZE; i++)
-    {
-        set_idt_entry(i, dummy, 0x08, 0x8e);
-    }
-}
-
 void load_idt()
 {
     asm volatile("lidt (%0)" : : "r"(&idt_descriptor));

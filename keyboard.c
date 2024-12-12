@@ -11,6 +11,10 @@ __attribute__((interrupt)) void keyboard_handler(struct interrupt_frame *frame)
     }
 
     outb(PIC1_COMMAND, PIC_EOI);
+    if (scancode >= 0x28) // If interrupt came from slave PIC
+    {
+        outb(PIC2_COMMAND, PIC_EOI);
+    }
 }
 uint8_t scancode_to_char(uint8_t scancode)
 {
@@ -83,7 +87,15 @@ uint8_t scancode_to_char(uint8_t scancode)
 
 void enable_keyboard_interrupt()
 {
-    uint8_t mask = inb(PIC1_DATA);
-    mask &= ~(1 << 1); // Clear bit 1 to enable IRQ1
-    outb(PIC1_DATA, mask);
+    outb(PIC1_COMMAND, 0x11); // Start initialization sequence (ICW1)
+    outb(PIC2_COMMAND, 0x11);
+    outb(PIC1_DATA, 0x20); // ICW2: Master PIC vector offset (0x20-0x27)
+    outb(PIC2_DATA, 0x28); // ICW2: Slave PIC vector offset (0x28-0x2F)
+    outb(PIC1_DATA, 0x04); // ICW3: Master PIC has slave at IRQ2
+    outb(PIC2_DATA, 0x02); // ICW3: Slave PIC cascade identity
+    outb(PIC1_DATA, 0x01); // ICW4: 8086 mode
+    outb(PIC2_DATA, 0x01);
+
+    outb(PIC1_DATA, 0xFD); // OCW1: Unmask IRQ1 (keyboard), mask all others
+    outb(PIC2_DATA, 0xFF); // OCW1: Mask all IRQs on slave
 }

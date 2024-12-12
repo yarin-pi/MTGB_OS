@@ -26,5 +26,5 @@ typedef struct
 #endif IDT_H
 
 void dummy();
-
+void unhandled_interrupt_handler(struct interrupt_frame *frame);
 void set_dummy();
