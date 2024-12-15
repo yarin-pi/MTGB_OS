@@ -11,7 +11,6 @@
 uint16_t *vga_buffer = (uint16_t *)VGA_BUFFER; // VGA buffer pointer
 uint8_t cursor_x = 0;                          // Current cursor position (x)
 uint8_t cursor_y = 0;                          // Current cursor position (y)
-
 void clear_screen()
 {
     int i;

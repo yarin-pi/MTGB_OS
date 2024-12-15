@@ -9,7 +9,6 @@ void set_idt_entry(int vector, uint32_t handler, uint16_t selector, uint8_t type
     idt[vector].type_attr = type_attr;
     idt[vector].offset_high = (handler >> 16) & 0xFFFF;
 }
-
 // Initialize the first entry to point to write_string function
 void init_idt()
 {

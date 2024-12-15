@@ -1,6 +1,6 @@
 #include "keyboard.h"
 
-__attribute__((interrupt)) void keyboard_handler(struct interrupt_frame *frame)
+__attribute__((interrupt, target("general-regs-only"))) void keyboard_handler(struct interrupt_frame *frame)
 {
     uint8_t scancode = inb(KEYBOARD_DATA_PORT);
 
@@ -60,6 +60,7 @@ uint8_t scancode_to_char(uint8_t scancode)
         'l',
         ';',
         '\'',
+        0,
         0,
         '\\',
         'z',

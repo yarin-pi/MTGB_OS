@@ -45,7 +45,6 @@ char *int_to_string(uint32_t num, char *str, int base)
 
     // Reverse the string
     reverse(str, i);
-
     return str;
 }
 void outl(uint16_t port, uint32_t value)

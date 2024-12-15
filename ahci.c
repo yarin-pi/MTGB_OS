@@ -53,7 +53,7 @@ uint32_t *find_ahci_controller()
 				int_to_string(bus, str, 10);
 				int_to_string(slot, str1, 10);
 				int_to_string(func, str2, 10);
-				
+
 				print(str);
 				print(", ");
 				print(str1);
