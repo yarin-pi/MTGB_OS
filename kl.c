@@ -44,6 +44,8 @@ int _start()
             set_idt_entry(i, (uint32_t)unhandled_interrupt_handler, 0x08, 0x8E);
         }
     }
+    set_idt_entry(14, (uint32_t)page_fault_handler, 0x08, 0x8e);
+
     set_idt_entry(
         33,                         // Vector number for keyboard IRQ1
         (uint32_t)keyboard_handler, // Address of the handler
@@ -53,6 +55,7 @@ int _start()
 
     asm volatile("sti");
     enable_keyboard_interrupt();
+
     while (1)
     {
     }

@@ -25,6 +25,5 @@ typedef struct
 } __attribute__((packed)) idt_ptr_t;
 #endif IDT_H
 
-void dummy();
 void unhandled_interrupt_handler(struct interrupt_frame *frame);
-void set_dummy();
+
