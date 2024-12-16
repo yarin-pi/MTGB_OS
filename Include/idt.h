@@ -23,7 +23,8 @@ typedef struct
     uint16_t limit; // Size of the IDT
     uint32_t base;  // Address of the first IDT entry
 } __attribute__((packed)) idt_ptr_t;
-#endif IDT_H
-
+void set_idt_entry(int vector, uint32_t handler, uint16_t selector, uint8_t type_attr);
+void init_idt();
 void unhandled_interrupt_handler(struct interrupt_frame *frame);
-
+void load_idt();
+#endif IDT_H

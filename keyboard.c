@@ -3,13 +3,23 @@
 __attribute__((interrupt, target("general-regs-only"))) void keyboard_handler(struct interrupt_frame *frame)
 {
     uint8_t scancode = inb(KEYBOARD_DATA_PORT);
-
     uint8_t c = scancode_to_char(scancode);
-    if (c != 0)
+    if (c != '0' & identifier)
     {
-        print_char(c);
-    }
+        if (c == '\n')
+        {
+            input_buffer[buffer_index] = '\0';
 
+            process_input(input_buffer);
+
+            buffer_index = 0;
+        }
+        else if (buffer_index < BUFFER_SIZE - 1)
+        {
+            input_buffer[buffer_index++] = c;
+            print_char(c);
+        }
+    }
     outb(PIC1_COMMAND, PIC_EOI);
     if (scancode >= 0x28) // If interrupt came from slave PIC
     {
