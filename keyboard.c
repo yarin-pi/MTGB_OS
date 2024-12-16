@@ -1,5 +1,7 @@
 #include "keyboard.h"
 
+int buffer_index = 0; 
+char input_buffer[BUFFER_SIZE];
 __attribute__((interrupt, target("general-regs-only"))) void keyboard_handler(struct interrupt_frame *frame)
 {
     uint8_t scancode = inb(KEYBOARD_DATA_PORT);
