@@ -21,7 +21,7 @@ typedef unsigned long long uint64_t;
 #define HBA_PORT_DET_PRESENT 3
 #define PCI_CONFIG_ADDRESS 0xCF8
 #define PCI_CONFIG_DATA    0xCFC
-#define	AHCI_BASE	0x400000	
+#define	AHCI_BASE	0xc0400000	
 
 #define HBA_PxCMD_ST    0x0001
 #define HBA_PxCMD_FRE   0x0010

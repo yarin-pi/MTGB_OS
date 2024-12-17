@@ -3,7 +3,7 @@
 
 #define VGA_WIDTH 80
 #define VGA_HEIGHT 25
-#define VGA_BUFFER 0x30000
+#define VGA_BUFFER 0xc0030000
 
 // VGA color attributes (example: white text on black background)
 #define DEFAULT_COLOR 0x0F

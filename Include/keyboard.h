@@ -12,14 +12,7 @@
 #define PIC_EOI 0x20
 #define BUFFER_SIZE 128
 
-struct interrupt_frame
-{
-    uint32_t ip;
-    uint32_t cs;
-    uint32_t flags;
-    uint32_t sp;
-    uint32_t ss;
-} __attribute__((packed));
+
 
 
 void keyboard_handler(struct interrupt_frame *frame); // when key is pressed function is called to handle the pressed event

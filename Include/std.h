@@ -13,6 +13,14 @@ typedef enum
     true
 } bool;
 
+struct interrupt_frame
+{
+    uint32_t ip;
+    uint32_t cs;
+    uint32_t flags;
+    uint32_t sp;
+    uint32_t ss;
+} __attribute__((packed));
 // Read a 16-bit value from an I/O port
 uint16_t inw(uint16_t port);
 

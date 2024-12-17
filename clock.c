@@ -13,7 +13,7 @@ void pit_set_frequency(uint32_t frequency)
     outl(PIT_CHANNEL_0_DATA, divisor & 0xFF); // Low byte
     outl(PIT_CHANNEL_0_DATA, (divisor >> 8) & 0xFF);
 }
-void pit_isr()
+__attribute__((interrupt, target("general-regs-only"))) void pit_isr(struct interrupt_frame *frame)
 {
     pit_ticks++;
     outl(0x20, 0x20);
