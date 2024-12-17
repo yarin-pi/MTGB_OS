@@ -30,10 +30,11 @@ main:
         mov ch, 0
         mov cl, 2
         mov ah, 0x02
-        mov al, 0x0f
+        mov al, 0x1f
         xor bx, bx
-        mov es, bx
-        mov bx, 0x7e00
+        mov di, 0xffff
+        mov es, di
+        mov bx, 0x0010
         int 0x13
         jmp check_a20
 after_a20_valid:
@@ -96,7 +97,7 @@ protected_mode:
         mov esp, 0xffff
         mov ebp, esp
         mov eax, 0x08
-        jmp 0x08:0x7e00
+        jmp 0x08:0x100000
 
 gdt_start:
    
