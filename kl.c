@@ -54,6 +54,7 @@ int _start()
     );
 
     asm volatile("sti");
+    clear_screen();
     enable_keyboard_interrupt();
 
     while (1)

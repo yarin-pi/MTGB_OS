@@ -117,7 +117,7 @@ uint8_t inb(uint16_t port)
     asm volatile("inb %1, %0" : "=a"(ret) : "Nd"(port));
     return ret;
 }
-int my_strncmp(const char *str1, const char *str2, uint32_t n)
+int strcmp(const char *str1, const char *str2, uint32_t n)
 {
     uint32_t i = 0;
 
