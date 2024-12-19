@@ -1,7 +1,9 @@
 #include "vm.h"
+
 page_table_entry_t page_table[1024] __attribute__((aligned(0x1000)));
 page_table_entry_t page_table2[1024] __attribute__((aligned(0x1000)));
 page_directory_entry_t page_directory[1024] __attribute__((aligned(0x1000)));
+
 void *setup_identity_mapping()
 {
     int i;
@@ -32,9 +34,9 @@ void *setup_identity_mapping()
     page_directory[1].table_addr = ((uint32_t)page_table2) >> 12;
     return (void *)page_directory;
 }
+
 void map_page(void *physaddr, void *virtualaddr, unsigned int flags)
 {
-
     unsigned long pdindex = (unsigned long)virtualaddr >> 22;
     unsigned long ptindex = (unsigned long)virtualaddr >> 12 & 0x03FF;
 
@@ -44,12 +46,46 @@ void map_page(void *physaddr, void *virtualaddr, unsigned int flags)
     page_table[ptindex].accessed = 1;
     page_table[ptindex].user = 0;
 }
-void page_fault_handler(uint32_t error_code)
+
+__attribute__((interrupt, target("general-regs-only"))) void page_fault_handler(void *frame, uint32_t error_code)
 {
     uint32_t faulting_address;
 
-    asm volatile("mov %%cr2, %0" : "=r"(faulting_address)); // Read faulting address from CR2
+    asm volatile("mov %%cr2, %0" : "=r"(faulting_address));
 
-    // Log the fault details
-    print("Page Fault Handler Invoked!\n");
+    int present = !(error_code & 0x1);
+    int write = error_code & 0x2;
+    int user = error_code & 0x4;
+    int reserved = error_code & 0x8;
+    int instruction_fetch = error_code & 0x10;
+
+    if (present)
+    {
+        void *new_page = malloc();
+
+        if (new_page == 0)
+        {
+            print("no physical memory left to allocate\n");
+        }
+    }
+    else if (write)
+    {
+        print("Tried to change read-only file fault\n");
+    }
+    else if (user)
+    {
+        print("userspace process cannot operate outside of premitted memory regions fault\n");
+    }
+    else if (reserved)
+    {
+        print("reserved bits overwritten fault\n");
+    }
+    else if (instruction_fetch)
+    {
+        print("attempt to fetch an instruction from a non-executable page fault\n");
+    }
+    else
+    {
+        print("unknown page fault error code\n");
+    }
 }
