@@ -33,6 +33,12 @@ void process_input(const char *input)
         print(output);
         print("\n");
     }
+    else if (strcmp(input, "exit", 5) == 0)
+    {
+        print("\nExiting...\n");
+        while (1)
+            ;
+    }
     else
     {
         print("\n");
