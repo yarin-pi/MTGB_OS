@@ -20,16 +20,21 @@ void clear_screen()
     }
     cursor_x = 0;
     cursor_y = 0;
+    move_cursor();
 }
 
 void move_cursor()
 {
+
     uint16_t position = cursor_y * VGA_WIDTH + cursor_x;
-    // Sending the cursor position to the VGA controller registers
-    outl(0x3D4, 14); // High byte
-    outl(0x3D5, position >> 8);
-    outl(0x3D4, 15); // Low byte
-    outl(0x3D5, position);
+
+    // Send the high byte of the cursor position
+    outb(0x3D4, 14);
+    outb(0x3D5, (position >> 8) & 0xFF);
+
+    // Send the low byte of the cursor position
+    outb(0x3D4, 15);
+    outb(0x3D5, position & 0xFF);
 }
 
 void print_char(char c)
@@ -75,4 +80,20 @@ void print(const char *str)
     {
         print_char(str[i]);
     }
+}
+void delete_char()
+{
+    if (cursor_x > 0)
+    {
+        cursor_x--;
+    }
+    else if (cursor_y > 0)
+    {
+        cursor_y--;
+        cursor_x = VGA_WIDTH - 1;
+    }
+
+    // Clear the character at the current cursor position
+    vga_buffer[cursor_y * VGA_WIDTH + cursor_x] = (DEFAULT_COLOR << 8) | ' ';
+    move_cursor();
 }

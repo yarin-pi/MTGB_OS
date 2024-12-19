@@ -1,15 +1,36 @@
 #include "keyboard.h"
 
+int buffer_index = 0;
+
+char input_buffer[BUFFER_SIZE];
 __attribute__((interrupt, target("general-regs-only"))) void keyboard_handler(struct interrupt_frame *frame)
 {
     uint8_t scancode = inb(KEYBOARD_DATA_PORT);
-
     uint8_t c = scancode_to_char(scancode);
-    if (c != 0)
-    {
-        print_char(c);
-    }
+    identifier = true;
 
+    if (c != 0 && c != '\0') // Only valid and non-null characters
+    {
+        if (c == '\b')
+        {
+            if (buffer_index > 0)
+            {
+                buffer_index--;
+                delete_char();
+            }
+        }
+        else if (c == '\n')
+        {
+            input_buffer[buffer_index] = '\0'; // End the input buffer
+            process_input(input_buffer);       // Process the buffer
+            buffer_index = 0;                  // Reset buffer
+        }
+        else if (buffer_index < BUFFER_SIZE - 1)
+        {
+            input_buffer[buffer_index++] = c; // Add character to buffer
+            print_char(c);                    // Print the character
+        }
+    }
     outb(PIC1_COMMAND, PIC_EOI);
     if (scancode >= 0x28) // If interrupt came from slave PIC
     {

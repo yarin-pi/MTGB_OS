@@ -117,3 +117,24 @@ uint8_t inb(uint16_t port)
     asm volatile("inb %1, %0" : "=a"(ret) : "Nd"(port));
     return ret;
 }
+int strcmp(const char *str1, const char *str2, uint32_t n)
+{
+    uint32_t i = 0;
+
+    while (i < n && str1[i] != '\0' && str2[i] != '\0')
+    {
+        if (str1[i] != str2[i])
+            return (str1[i] - str2[i]);
+        i++;
+    }
+
+    if (i < n)
+    {
+        if (str1[i] == '\0' && str2[i] != '\0')
+            return -1; // str1 is shorter
+        if (str2[i] == '\0' && str1[i] != '\0')
+            return 1; // str2 is shorter
+    }
+
+    return 0;
+}
