@@ -19,7 +19,7 @@ void init_idt()
     // 0x08 is the code segment selector, 0x8E for interrupt gate
 }
 
-void unhandled_interrupt_handler(struct interrupt_frame *frame)
+__attribute__((interrupt, target("general-regs-only"))) void unhandled_interrupt_handler(struct interrupt_frame *frame)
 {
     // Print an error message or halt the system
     print("Unhandled interrupt!\n");
