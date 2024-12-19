@@ -47,7 +47,7 @@ void map_page(void *physaddr, void *virtualaddr, unsigned int flags)
     page_table[ptindex].user = 0;
 }
 
-__attribute__((interrupt, target("general-regs-only"))) void page_fault_handler(void *frame, uint32_t error_code)
+void page_fault_handler(uint32_t error_code)
 {
     uint32_t faulting_address;
 
@@ -61,7 +61,7 @@ __attribute__((interrupt, target("general-regs-only"))) void page_fault_handler(
 
     if (present)
     {
-        void *new_page = malloc();
+        void *new_page; // should malloc bruh
 
         if (new_page == 0)
         {
