@@ -6,7 +6,10 @@
 #include "vm.h"
 #include "keyboard.h"
 #include "clock.h"
-#define uint32_t unsigned int
+
+#define HIGHER_HALF(addr) ((void*)((uint32_t)(addr) + 0xC0000000))
+
+void abc();
 int _start()
 {
     void *page_directory = setup_identity_mapping();
@@ -19,7 +22,8 @@ int _start()
 
     asm volatile("mov %0, %%cr0" ::"r"(cr0));
 
-    map_page(0xB8000, 0xC0030000, 0);
+    abc();
+    map_page(0xB8000, 0xC0150000, 0);
     init_idt();
     load_idt();
 
@@ -29,11 +33,11 @@ int _start()
         char *err = "couldnt find ahci\n";
         print(err);
     }
-    map_page(ahci_add, 0xc0020000, 0);
-    HBA_MEM *abar = (HBA_MEM *)(0xc0020000);
+    map_page(ahci_add, 0xc0120000, 0);
+    HBA_MEM *abar = (HBA_MEM *)(0xc0120000);
 
     probe_port(abar);
-
+    abar = (HBA_MEM *)(0xc0120000);
     char *port1 = (char *)(abar) + 0x100;
     HBA_PORT *port = (HBA_PORT *)(port1);
     char num[32]; // Issue command
@@ -43,14 +47,15 @@ int _start()
     for (int i = 0; i < IDT_SIZE; i++)
     {
         
-            set_idt_entry(i, (uint32_t)unhandled_interrupt_handler, 0x08, 0x8E);
+        set_idt_entry(i, (uint32_t)HIGHER_HALF(unhandled_interrupt_handler), 0x08, 0x8E);
         
     }
-    set_idt_entry(14, (uint32_t)page_fault_handler, 0x08, 0x8e);
+    
+    set_idt_entry(14, (uint32_t)HIGHER_HALF(page_fault_handler), 0x08, 0x8e);
 
     set_idt_entry(
         33,                         // Vector number for keyboard IRQ1
-        (uint32_t)keyboard_handler, // Address of the handler
+        (uint32_t)HIGHER_HALF(keyboard_handler), // Address of the handler
         0x08,                       // Code segment selector
         0x8E                        // Type attribute: present, privilege 0, 32-bit interrupt gate
     );
@@ -68,4 +73,16 @@ int _start()
     {
     }
     return 0;
+}
+void abc()
+{
+    
+
+    
+    asm volatile("pop %eax");  
+    asm volatile("pop %eax");  
+    asm volatile("add $0xc0000000, %eax");
+    asm volatile("add $0xc0200000, %esp");
+    asm volatile("jmp *%eax");
+
 }
