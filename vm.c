@@ -23,7 +23,7 @@ void *setup_identity_mapping()
         page_table2[i].present = 1;
         page_table2[i].rw = 1;
         page_table2[i].user = 0;
-        page_table2[i].frame_addr = i + 256; // Offset: 256 * 4KB = 1MB (0x00100000)
+        page_table2[i].frame_addr = i ; // Offset: 256 * 4KB = 1MB (0x00100000)
     }
     page_directory[768].present = 1; // 768 * 4MB = 3GB (0xC0000000)
     page_directory[768].rw = 1;

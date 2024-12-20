@@ -3,7 +3,7 @@ ENTRY(_start)
 SECTIONS
 {
     /* Load kernel code at physical address 0x100000 */
-    . = 0x100000;
+    . = 0xc0100000;
     
     .text : {
         *(.text)
