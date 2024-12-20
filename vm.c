@@ -2,36 +2,44 @@
 
 page_table_entry_t page_table[1024] __attribute__((aligned(0x1000)));
 page_table_entry_t page_table2[1024] __attribute__((aligned(0x1000)));
+page_table_entry_t page_table3[1024] __attribute__((aligned(0x1000)));
 page_directory_entry_t page_directory[1024] __attribute__((aligned(0x1000)));
 
 void *setup_identity_mapping()
 {
-    int i;
-    for (i = 0; i < 1024; i++)
-    {
+    for (int i = 0; i < 1024; i++) {
         page_table[i].present = 1;
         page_table[i].rw = 1;
         page_table[i].user = 0;
-        page_table[i].frame_addr = i;
+        page_table[i].frame_addr = i; // Identity mapping
     }
     page_directory[0].present = 1;
     page_directory[0].rw = 1;
     page_directory[0].user = 0;
-    page_directory[0].page_size = 0;
     page_directory[0].table_addr = ((uint32_t)page_table) >> 12;
-    int j;
-    for (j = 0; j < 1024; j++)
-    {
-        page_table2[j].present = 1;
-        page_table2[j].rw = 1;
-        page_table2[j].user = 0;
-        page_table2[j].frame_addr = j + 1024;
+
+    // Map higher-half kernel (0xC0000000 -> 0x00100000)
+    for (int i = 0; i < 1024; i++) {
+        page_table2[i].present = 1;
+        page_table2[i].rw = 1;
+        page_table2[i].user = 0;
+        page_table2[i].frame_addr = i ; // Offset: 256 * 4KB = 1MB (0x00100000)
     }
-    page_directory[1].present = 1;
-    page_directory[1].rw = 1;
-    page_directory[1].user = 0;
-    page_directory[1].page_size = 0;
-    page_directory[1].table_addr = ((uint32_t)page_table2) >> 12;
+    page_directory[768].present = 1; // 768 * 4MB = 3GB (0xC0000000)
+    page_directory[768].rw = 1;
+    page_directory[768].user = 0;
+    page_directory[768].table_addr = ((uint32_t)page_table2) >> 12;
+
+    for (int i = 0; i < 1024; i++) {
+        page_table3[i].present = 1;
+        page_table3[i].rw = 1;
+        page_table3[i].user = 0;
+        page_table3[i].frame_addr = i + (0xc0400000/0x1000); 
+    }
+    page_directory[769].present = 1;
+    page_directory[769].rw = 1;
+    page_directory[769].user = 0;
+    page_directory[769].table_addr = ((uint32_t)page_table3) >> 12;
     return (void *)page_directory;
 }
 
@@ -40,11 +48,11 @@ void map_page(void *physaddr, void *virtualaddr, unsigned int flags)
     unsigned long pdindex = (unsigned long)virtualaddr >> 22;
     unsigned long ptindex = (unsigned long)virtualaddr >> 12 & 0x03FF;
 
-    page_table[ptindex].present = 1;
-    page_table[ptindex].frame_addr = (unsigned long)physaddr >> 12;
-    page_table[ptindex].rw = 1;
-    page_table[ptindex].accessed = 1;
-    page_table[ptindex].user = 0;
+    page_table2[ptindex].present = 1;
+    page_table2[ptindex].frame_addr = (unsigned long)physaddr >> 12;
+    page_table2[ptindex].rw = 1;
+    page_table2[ptindex].accessed = 1;
+    page_table2[ptindex].user = 0;
 }
 
 void page_fault_handler(uint32_t error_code)

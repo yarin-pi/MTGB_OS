@@ -7,7 +7,7 @@ CFLAGS = -ffreestanding -Wall -w -Wextra -I./Include -g -gdwarf-4
 
 # Linker flags
 LDFLAGS_BIN = -T linker.ld --oformat=binary
-LDFLAGS_ELF = -T linker.ld
+LDFLAGS_ELF = -T linker2.ld
 
 # List of source files
 SRCS = $(wildcard *.c)
