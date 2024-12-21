@@ -97,3 +97,4 @@ void delete_char()
     vga_buffer[cursor_y * VGA_WIDTH + cursor_x] = (DEFAULT_COLOR << 8) | ' ';
     move_cursor();
 }
+

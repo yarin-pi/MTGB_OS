@@ -26,3 +26,4 @@ void wait_ticks(uint32_t ticks)
         asm volatile("hlt");
     }
 }
+

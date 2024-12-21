@@ -23,6 +23,7 @@ uint32_t pci_read_dword(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset)
 	return inl(PCI_CONFIG_DATA);
 }
 uint32_t abar;
+
 char str[8];
 char str1[8];
 char str2[8];

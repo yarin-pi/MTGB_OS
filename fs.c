@@ -17,7 +17,9 @@ uint32_t GetTotalSectorCount()
         return bpb.long_sectors_count;
     }
 }
-uint32_t GetMetaDataSector()
+
+uint32_t
+GetMetaDataSector()
 {
     BootSector bpb;
     uint16_t tmp[256];
@@ -342,10 +344,9 @@ uint16_t FatAddData(void *data, uint32_t size)
         memcpy(tmp, p, count);
         write_ahci(port_ptr, offset, 0, 1, (uint16_t *)tmp);
         p += count;
-        
 
-            // Update FAT clusters
-            FatUpdateCluster(clusterIndex, endOfChainValue);
+        // Update FAT clusters
+        FatUpdateCluster(clusterIndex, endOfChainValue);
         if (prevClusterIndex)
         {
             FatUpdateCluster(prevClusterIndex, clusterIndex);

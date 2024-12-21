@@ -12,9 +12,6 @@
 #define PIC_EOI 0x20
 #define BUFFER_SIZE 128
 
-
-
-
 void keyboard_handler(struct interrupt_frame *frame); // when key is pressed function is called to handle the pressed event
 uint8_t scancode_to_char(uint8_t scancode);           // translate the pressed key to a character
 void enable_keyboard_interrupt();
