@@ -33,5 +33,5 @@ void memcpy(void *dest, const void *src, uint32_t count);
 void outb(uint16_t port, uint8_t value);
 uint8_t inb(uint16_t port);
 int strcmp(const char *str1, const char *str2, uint32_t n);
-
+int pow(int a, int b);
 #endif STD_H

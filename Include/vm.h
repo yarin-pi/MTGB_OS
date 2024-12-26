@@ -40,4 +40,5 @@ typedef struct
 void *setup_identity_mapping();
 void map_page(void *physaddr, void *virtualaddr, unsigned int flags);
 void page_fault_handler(uint32_t error_code);
+void init_recursivePage();
 #endif VM_H // DEBUG
