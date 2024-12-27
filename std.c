@@ -138,5 +138,12 @@ int strcmp(const char *str1, const char *str2, uint32_t n)
 
     return 0;
 }
-
-
+int pow(int a, int b)
+{
+    int x = 1;
+    for(int i = 0; i < b; i++)
+    {
+        x = a * x;
+    }
+    return x;
+}

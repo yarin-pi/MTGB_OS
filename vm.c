@@ -97,4 +97,7 @@ void page_fault_handler(uint32_t error_code)
         print("unknown page fault error code\n");
     }
 }
-
+void init_recursivePage()
+{
+    page_directory[1023].table_addr = page_directory;
+}
