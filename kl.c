@@ -75,11 +75,6 @@ void abc()
     asm volatile("pop %eax");
     asm volatile("add $0xc0000000, %eax");
     asm volatile("add $0xc0200000, %esp");
-<<<<<<< HEAD
-    asm volatile("jmp *%eax");
-}
-=======
     asm volatile("jmp *%eax"); 
 
 }
->>>>>>> origin/yarin/feature/malloc_free
