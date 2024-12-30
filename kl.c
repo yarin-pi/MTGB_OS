@@ -7,6 +7,7 @@
 #include "keyboard.h"
 #include "clock.h"
 
+
 #define HIGHER_HALF(addr) ((void*)((uint32_t)(addr) + 0xC0000000))
 
 void abc();
@@ -65,8 +66,31 @@ int _start()
     asm volatile("sti");
     clear_screen();
     enable_keyboard_interrupt();
-    print("test");
+    print("test buddy: \n"); 
+    Buddy bud;
+    bud.base_address = 0x200000;
+    bud.max_order = 3;
+    bud.total_size = 0x1000000;
+
+    init_buddy(&bud);
+    int i = 5;
     
+    void* ptr = balloc(&bud, 0x2000);
+    char* no[32];
+    int_to_string((uint32_t)ptr,no,16);
+    print(no);
+    print("\n");
+    bfree(&bud, ptr,1);
+    ptr = balloc(&bud, 0x2000);
+   
+    int_to_string((uint32_t)ptr,no,16);
+    print(no);
+    print("\n");
+   
+    
+   
+    
+
 
 
 

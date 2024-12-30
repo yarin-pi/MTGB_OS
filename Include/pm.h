@@ -14,8 +14,8 @@ typedef struct
    
 } Buddy;
 
-Buddy* init_buddy(Buddy* buddy);
-
-
+void init_buddy(Buddy* buddy);
+void* balloc(Buddy* buddy,uint32_t alloc_size);
+void bfree(Buddy* buddy,void* ptr, uint16_t order);
 #endif PM_H
 
