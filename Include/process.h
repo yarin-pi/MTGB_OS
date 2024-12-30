@@ -1,10 +1,9 @@
 #ifndef PROCESS_H
 #define PROCESS_H
 #include "std.h"
-#include "thread.h"
 #define MAX_THREADS 8
 
-struct process
+typedef struct Process
 {
     uint32_t pid;              // Process ID
     uint32_t parent_pid;       // Parent process ID
@@ -15,7 +14,5 @@ struct process
     uint32_t memory_base;      // Base address of process memory
     uint32_t memory_limit;     // Size/limit of process memory
     uint32_t num_of_threads;   // Number of threads
-    struct thread threads[MAX_THREADS];
-    void *context;
-};
+} Process;
 #endif PROCESS_H
