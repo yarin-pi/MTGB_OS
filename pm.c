@@ -57,7 +57,7 @@ void* balloc(Buddy* buddy,uint32_t alloc_size)
     uint16_t offset = 0;
     uint16_t block_lv = 0;
     uint16_t level = get_level(alloc_size);
-    bool found = false;
+    abool found = FALSE;
     for (int i = level;i <= buddy->max_order && !found; i++)
     {
         uint8_t* map = buddy->bitmap[i];
@@ -71,7 +71,7 @@ void* balloc(Buddy* buddy,uint32_t alloc_size)
                 {
                     block_lv = i;
                     offset = j;
-                    found = true;
+                    found = TRUE;
                     break;
 
                 }

@@ -112,7 +112,7 @@ uint32_t GetRootDirectory()
     return (offset);
 }
 
-bool FatInitImage(HBA_PORT *port)
+abool FatInitImage(HBA_PORT *port)
 {
     // check
     port_ptr = port;
@@ -127,7 +127,7 @@ bool FatInitImage(HBA_PORT *port)
     FatUpdateCluster(0, 0xff00 | bpb.media_descriptor); // media type
     FatUpdateCluster(1, 0xffff);                        // end of chain cluster
 
-    return true;
+    return TRUE;
 }
 
 void FatSplitPath(uint8_t dstName[8], uint8_t dstExt[3], const char *path)

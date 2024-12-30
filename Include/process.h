@@ -3,14 +3,7 @@
 #include "std.h"
 #include "thread.h"
 #define MAX_THREADS 8
-typedef enum
-{
-    NEW,
-    READY,
-    RUNNING,
-    BLOCKED,
-    TERMINATED
-} state;
+
 struct process
 {
     uint32_t pid;              // Process ID
