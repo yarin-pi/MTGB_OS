@@ -59,7 +59,7 @@ uint32_t GetRootDirectory();
 
 
 
-bool FatInitImage(HBA_PORT* port);
+abool FatInitImage(HBA_PORT* port);
 
 
 void FatSplitPath(uint8_t dstName[8], uint8_t dstExt[3], const char *path);

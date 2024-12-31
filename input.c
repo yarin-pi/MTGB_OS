@@ -1,5 +1,5 @@
 #include "input.h"
-bool identifier = 1;
+abool identifier = 1;
 void process_input(const char *input)
 {
     if (strcmp(input, "cls", 4) == 0)

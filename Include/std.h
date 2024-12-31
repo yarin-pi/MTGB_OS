@@ -7,12 +7,21 @@ typedef unsigned long long uint64_t;
 void reverse(char str[], int length);
 char *int_to_string(uint32_t num, char *str, int base);
 void outl(uint16_t port, uint32_t value);
+
 typedef enum
 {
-    false,
-    true
-} bool;
+    FALSE,
+    TRUE
+} abool;
 
+typedef enum
+{
+    NEW,
+    READY,
+    RUNNING,
+    BLOCKED,
+    TERMINATED
+} state;
 struct interrupt_frame
 {
     uint32_t ip;

@@ -61,7 +61,21 @@ int _start()
     asm volatile("sti");
     clear_screen();
     enable_keyboard_interrupt();
-    print("test");
+    print("test buddy: \n");
+    Buddy bud;
+    bud.base_address = 0x200000;
+    bud.max_order = 3;
+    bud.total_size = 0x1000000;
+
+    init_buddy(&bud);
+    int i = 5;
+
+    void *ptr = balloc(&bud, 0x3000);
+    char *no[32];
+    int_to_string((uint32_t)ptr, no, 16);
+    print(no);
+    print("\n");
+    bfree(&bud, ptr, 2);
 
     while (1)
     {
@@ -75,6 +89,5 @@ void abc()
     asm volatile("pop %eax");
     asm volatile("add $0xc0000000, %eax");
     asm volatile("add $0xc0200000, %esp");
-    asm volatile("jmp *%eax"); 
-
+    asm volatile("jmp *%eax");
 }
