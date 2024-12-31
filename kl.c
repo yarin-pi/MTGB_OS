@@ -75,19 +75,14 @@ int _start()
     init_buddy(&bud);
     int i = 5;
     
-    void* ptr = balloc(&bud, 0x2000);
+    void* ptr = balloc(&bud, 0x3000);
     char* no[32];
     int_to_string((uint32_t)ptr,no,16);
     print(no);
     print("\n");
-    bfree(&bud, ptr,1);
-    ptr = balloc(&bud, 0x2000);
-   
-    int_to_string((uint32_t)ptr,no,16);
-    print(no);
-    print("\n");
-   
+    bfree(&bud, ptr,2);
     
+   
    
     
 

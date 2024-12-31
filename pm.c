@@ -55,12 +55,14 @@ uint32_t split_block(Buddy* buddy, uint16_t level, uint32_t index,uint16_t depth
 void merge_block(Buddy* buddy, uint16_t level, uint32_t index)
 {
     uint8_t* map = buddy->bitmap[level];
-    if((((map[index/8] >> (index % 8) ) & 1) || ((map[index/8] >> ((index + 1) % 8) ) & 1)) || level > 3)
+    if((((map[index/8] >> (index % 8) ) & 1) || ((map[index/8] >> ((index + 1) % 8) ) & 1)) || level > 2)
     {
         return;
     }
     map[index/8] |= 1 << (index % 8);
     map[index/8] |= 1 << ((index + 1) % 8);
+    map = buddy->bitmap[level + 1];
+    map[(index/2)/8] &= ~(1 << ((index/2) % 8));
     merge_block(buddy, level + 1,index / 2);
 }
 void* balloc(Buddy* buddy,uint32_t alloc_size)
