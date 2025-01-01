@@ -13,7 +13,7 @@
 typedef struct elf_header
 {
     uint32_t magic;      // Magic number to identify ELF
-    uint8_t eclass;       // 1: 32-bit, 2: 64-bit
+    uint8_t eclass;      // 1: 32-bit, 2: 64-bit
     uint8_t data;        // Endianness: 1=LSB, 2=MSB
     uint8_t version;     // ELF version
     uint8_t os_abi;      // OS/ABI identification
@@ -46,5 +46,7 @@ typedef struct program_header
     uint32_t flags;  // Flags (e.g., executable, writable)
     uint32_t align;  // Alignment of segment
 } ProgramHeader;
+
+int validate_elf(ELFHeader *header);
 
 #endif // EXE_H
