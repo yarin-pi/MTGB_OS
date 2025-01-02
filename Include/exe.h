@@ -1,8 +1,18 @@
 #ifndef EXE_H
 #define EXE_H
 
-#include "std.h"
 #define ELF_NIDENT 16
+#define ELF_RELOC_ERR -1
+#define ELF32_R_SYM(INFO) ((INFO) >> 8)
+#define ELF32_R_TYPE(INFO) ((uint8_t)(INFO))
+#define DO_386_32(S, A) ((S) + (A))
+#define DO_386_PC32(S, A, P) ((S) + (A) - (P))
+enum RtT_Types
+{
+    R_386_NONE = 0, // No relocation
+    R_386_32 = 1,   // Symbol + Offset
+    R_386_PC32 = 2  // Symbol + Offset - Section Offset
+};
 enum Elf_Ident
 {
     EI_MAG0 = 0,       // 0x7F
@@ -22,7 +32,75 @@ enum Elf_Type
     ET_REL = 1,  // Relocatable File
     ET_EXEC = 2  // Executable File
 };
+typedef struct
+{
+    uint32_t sh_name;
+    uint32_t sh_type;
+    uint32_t sh_flags;
+    uint32_t sh_addr;
+    uint32_t sh_offset;
+    uint32_t sh_size;
+    uint32_t sh_link;
+    uint32_t sh_info;
+    uint32_t sh_addralign;
+    uint32_t sh_entsize;
+} SectionHeader;
+#define SHN_UNDEF (0x00) // Undefined/Not Present
+#define SHN_ABS 0xFFF1   // Absolute symbol
+typedef struct
+{
+    uint32_t r_offset;
+    uint32_t r_info;
+} Elf32_Rel;
 
+typedef struct
+{
+    uint32_t r_offset;
+    uint32_t r_info;
+    uint32_t r_addend;
+} Elf32_Rela;
+enum ShT_Types
+{
+    SHT_0 = 0,        // 0 section
+    SHT_PROGBITS = 1, // Program information
+    SHT_SYMTAB = 2,   // Symbol table
+    SHT_STRTAB = 3,   // String table
+    SHT_RELA = 4,     // Relocation (w/ addend)
+    SHT_NOBITS = 8,   // Not present in file
+    SHT_REL = 9,      // Relocation (no addend)
+};
+
+enum ShT_Attributes
+{
+    SHF_WRITE = 0x01, // Writable section
+    SHF_ALLOC = 0x02  // Exists in memory
+};
+typedef struct
+{
+    uint32_t st_name;
+    uint32_t st_value;
+    uint32_t st_size;
+    uint8_t st_info;
+    uint8_t st_other;
+    uint16_t st_shndx;
+} SymbolHeader;
+
+#define ELF32_ST_BIND(INFO) ((INFO) >> 4)
+#define ELF32_ST_TYPE(INFO) ((INFO) & 0x0F)
+
+enum StT_Bindings
+{
+    STB_LOCAL = 0,  // Local scope
+    STB_GLOBAL = 1, // Global scope
+    STB_WEAK = 2    // Weak, (ie. __attribute__((weak)))
+};
+
+enum StT_Types
+{
+    STT_NOTYPE = 0, // No type
+    STT_OBJECT = 1, // Variables, arrays, etc.
+    STT_FUNC = 2    // Methods or functions
+};
 #define EM_386 (3)     // x86 Machine Type
 #define EV_CURRENT (1) // ELF Current Version
 
@@ -54,16 +132,16 @@ typedef struct elf_header
 } ELFHeader;
 
 // Program Header structure (used to describe memory layout)
-typedef struct program_header
+typedef struct
 {
-    uint32_t type;   // Type of segment (e.g., loadable, dynamic linking)
-    uint32_t offset; // Offset of segment in file
-    uint32_t vaddr;  // Virtual address in memory
-    uint32_t paddr;  // Physical address (if applicable)
-    uint32_t filesz; // Size of segment in file
-    uint32_t memsz;  // Size of segment in memory
-    uint32_t flags;  // Flags (e.g., executable, writable)
-    uint32_t align;  // Alignment of segment
+    uint32_t p_type;
+    uint32_t p_offset;
+    uint32_t p_vaddr;
+    uint32_t p_paddr;
+    uint32_t p_filesz;
+    uint32_t p_memsz;
+    uint32_t p_flags;
+    uint32_t p_align;
 } ProgramHeader;
 
 int validate_elf(ELFHeader *header);
