@@ -7,11 +7,11 @@ section .text
 global main
 .bpb:
     
-    db 0xeb,0x27,0x90
+    db 0xeb,0x3c,0x90
     dq 0x9090909090909090
     dw 512
-    db 1
-    db 40
+    db 64
+    dw 40
     db 1
     dw 512
     dw 0
@@ -25,6 +25,7 @@ global main
     db 0
     db 0x29
     dd 0xa0a1a2a3
+    
 main:
         mov dh, 0
         mov ch, 0

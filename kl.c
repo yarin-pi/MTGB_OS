@@ -7,7 +7,8 @@
 #include "keyboard.h"
 #include "clock.h"
 
-#define HIGHER_HALF(addr) ((void *)((uint32_t)(addr) + 0xC0000000))
+
+
 
 void abc();
 int _start()
@@ -41,6 +42,8 @@ int _start()
     char *port1 = (char *)(abar) + 0x100;
     HBA_PORT *port = (HBA_PORT *)(port1);
     char num[32]; // Issue command
+    
+    print_int((void*)virt_to_phys(0xC0150000), 16);
 
     port_rebase(port, 0);
     for (int i = 0; i < IDT_SIZE; i++)
@@ -57,11 +60,14 @@ int _start()
         0x08,                                    // Code segment selector
         0x8E                                     // Type attribute: present, privilege 0, 32-bit interrupt gate
     );
-
+    
+    
+    
     asm volatile("sti");
+    FatInitImage(port);
     clear_screen();
     enable_keyboard_interrupt();
-    print("test buddy: \n");
+    print("test buddy: \n"); 
     Buddy bud;
     bud.base_address = 0x200000;
     bud.max_order = 3;
@@ -69,13 +75,25 @@ int _start()
 
     init_buddy(&bud);
     int i = 5;
-
-    void *ptr = balloc(&bud, 0x3000);
-    char *no[32];
-    int_to_string((uint32_t)ptr, no, 16);
+    
+    void* ptr = balloc(&bud, 0x2000);
+    char* no[32];
+    int_to_string((uint32_t)ptr,no,16);
     print(no);
     print("\n");
-    bfree(&bud, ptr, 2);
+    bfree(&bud, ptr,1);
+    ptr = balloc(&bud, 0x2000);
+   
+    int_to_string((uint32_t)ptr,no,16);
+    print(no);
+    print("\n");
+   
+    
+   
+    
+
+
+
 
     while (1)
     {

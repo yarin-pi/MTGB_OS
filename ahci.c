@@ -268,17 +268,18 @@ int read_ahci(HBA_PORT *port, uint32_t startl, uint32_t starth, uint32_t count, 
 	int i;
 	for (i = 0; i < cmdheader->prdtl - 1; i++)
 	{
-		cmdtbl->prdt_entry[i].dba = (uint32_t)buf;
+		cmdtbl->prdt_entry[i].dba = (uint32_t)virt_to_phys(buf);
 		cmdtbl->prdt_entry[i].dbc = 8 * 1024 - 1; // 8K bytes (this value should always be set to 1 less than the actual value)
 		cmdtbl->prdt_entry[i].i = 1;
 		buf += 4 * 1024; // 4K words
 		count -= 16;	 // 16 sectors
 	}
 	// Last entry
-	cmdtbl->prdt_entry[i].dba = (uint32_t)buf;
+	cmdtbl->prdt_entry[i].dba = (uint32_t)virt_to_phys(buf);
 	cmdtbl->prdt_entry[i].dbc = (count << 9) - 1; // 512 bytes per sector
 	cmdtbl->prdt_entry[i].i = 1;
 
+	
 	// Setup command
 	FIS_REG_H2D *cmdfis = (FIS_REG_H2D *)(&cmdtbl->cfis);
 
@@ -297,8 +298,9 @@ int read_ahci(HBA_PORT *port, uint32_t startl, uint32_t starth, uint32_t count, 
 
 	cmdfis->countl = count & 0xFF;
 	cmdfis->counth = (count >> 8) & 0xFF;
+	
 	// up
-
+	
 	// The below loop waits until the port is no longer busy before issuing a new command
 	while ((port->tfd & (ATA_DEV_BUSY | ATA_DEV_DRQ)) && spin < 1000000)
 	{
@@ -310,7 +312,7 @@ int read_ahci(HBA_PORT *port, uint32_t startl, uint32_t starth, uint32_t count, 
 		print("Port is hung\n");
 		return 0;
 	}
-
+	
 	port->ci = 1 << slot;
 
 	// Wait for completion
@@ -362,14 +364,14 @@ int write_ahci(HBA_PORT *port, uint32_t startl, uint32_t starth, uint32_t count,
 	int i;
 	for (i = 0; i < cmdheader->prdtl - 1; i++)
 	{
-		cmdtbl->prdt_entry[i].dba = (uint32_t)buf;
+		cmdtbl->prdt_entry[i].dba = (uint32_t)virt_to_phys(buf);
 		cmdtbl->prdt_entry[i].dbc = 8 * 1024 - 1; // 8K bytes (this value should always be set to 1 less than the actual value)
 		cmdtbl->prdt_entry[i].i = 1;
 		buf += 4 * 1024; // 4K words
 		count -= 16;	 // 16 sectors
 	}
 	// Last entry
-	cmdtbl->prdt_entry[i].dba = (uint32_t)buf;
+	cmdtbl->prdt_entry[i].dba = (uint32_t)virt_to_phys(buf);
 	cmdtbl->prdt_entry[i].dbc = (count << 9) - 1; // 512 bytes per sector
 	cmdtbl->prdt_entry[i].i = 1;
 
@@ -404,7 +406,8 @@ int write_ahci(HBA_PORT *port, uint32_t startl, uint32_t starth, uint32_t count,
 		print("Port is hung\n");
 		return 0;
 	}
-
+	
+	
 	port->ci = 1 << slot;
 
 	// Wait for completion
