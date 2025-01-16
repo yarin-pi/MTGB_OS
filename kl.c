@@ -8,7 +8,7 @@
 #include "clock.h"
 
 
-#define HIGHER_HALF(addr) ((void*)((uint32_t)(addr) + 0xC0000000))
+
 
 void abc();
 int _start()
@@ -43,6 +43,7 @@ int _start()
     HBA_PORT *port = (HBA_PORT *)(port1);
     char num[32]; // Issue command
     
+    print_int((void*)virt_to_phys(0xC0150000), 16);
 
     port_rebase(port, 0);
     for (int i = 0; i < IDT_SIZE; i++)
@@ -62,8 +63,9 @@ int _start()
     );
     
     
-
+    
     asm volatile("sti");
+    FatInitImage(port);
     clear_screen();
     enable_keyboard_interrupt();
     print("test buddy: \n"); 

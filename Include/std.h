@@ -1,5 +1,6 @@
 #ifndef STD_H
 #define STD_H
+#define HIGHER_HALF(addr) ((void*)((uint32_t)(addr) + 0xC0000000))
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;

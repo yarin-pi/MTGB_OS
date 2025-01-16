@@ -9,7 +9,7 @@ typedef struct {
     char blabla[8];
     uint16_t bytes_per_sector;
     uint8_t  sectors_per_cluster;
-    uint8_t reserved_sectors;
+    uint16_t reserved_sectors;
     uint8_t  num_fats;
     uint16_t root_entries;
     uint16_t short_sectors_count; // if zero check total_sectors_long
@@ -24,7 +24,7 @@ typedef struct {
     uint8_t  boot_signature;
     uint32_t volume_id;
     char     volume_label[11];
-    char     fs_type[8];
+    char     fs_type[9];
 } __attribute__((packed)) BootSector; //add __attribute__((packed))
 
 typedef struct {

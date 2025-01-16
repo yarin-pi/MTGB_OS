@@ -114,8 +114,11 @@ bool FatInitImage(HBA_PORT *port)
 {
     // check
     port_ptr = port;
+    
     BootSector bpb;
+    
     uint16_t tmp[256];
+    
     read_ahci(port_ptr, 0, 0, 1, tmp);
     bpb = *(BootSector *)tmp;
 

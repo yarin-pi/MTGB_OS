@@ -97,3 +97,10 @@ void delete_char()
     vga_buffer[cursor_y * VGA_WIDTH + cursor_x] = (DEFAULT_COLOR << 8) | ' ';
     move_cursor();
 }
+void print_int(uint32_t i,int base)
+{
+    char* no[32];
+    int_to_string(i,no,base);
+    print(no);
+    print("\n");
+}

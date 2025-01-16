@@ -1,6 +1,7 @@
 #include "vm.h"
 
 page_table_entry_t page_table[1024] __attribute__((aligned(0x1000)));
+
 page_table_entry_t page_table2[1024] __attribute__((aligned(0x1000)));
 page_table_entry_t page_table3[1024] __attribute__((aligned(0x1000)));
 page_directory_entry_t page_directory[1024] __attribute__((aligned(0x1000)));
@@ -18,6 +19,8 @@ void *setup_identity_mapping()
     page_directory[0].user = 0;
     page_directory[0].table_addr = ((uint32_t)page_table) >> 12;
 
+    
+
     // Map higher-half kernel (0xC0000000 -> 0x00100000)
     for (int i = 0; i < 1024; i++) {
         page_table2[i].present = 1;
@@ -34,12 +37,12 @@ void *setup_identity_mapping()
         page_table3[i].present = 1;
         page_table3[i].rw = 1;
         page_table3[i].user = 0;
-        page_table3[i].frame_addr = i + (0xc0400000/0x1000); 
+        page_table3[i].frame_addr = (i + (0x400000 / 0x1000)); 
     }
-    page_directory[769].present = 1;
-    page_directory[769].rw = 1;
-    page_directory[769].user = 0;
-    page_directory[769].table_addr = ((uint32_t)page_table3) >> 12;
+    page_directory[1].present = 1;
+    page_directory[1].rw = 1;
+    page_directory[1].user = 0;
+    page_directory[1].table_addr = ((uint32_t)page_table3) >> 12;
     return (void *)page_directory;
 }
 
@@ -53,6 +56,16 @@ void map_page(void *physaddr, void *virtualaddr, unsigned int flags)
     page_table2[ptindex].rw = 1;
     page_table2[ptindex].accessed = 1;
     page_table2[ptindex].user = 0;
+}
+uint32_t* virt_to_phys(void* virtual)
+{
+    int pdi_index = (unsigned long)virtual >> 22;
+    int pti_index = (unsigned long)virtual >> 12 & 0x3ff;
+    int offset = (unsigned long)virtual & 0xfff;
+    page_table_entry_t* ent = page_directory[pdi_index].table_addr << 12;
+    ent = HIGHER_HALF(ent);
+    return ((ent[pti_index].frame_addr << 12) | offset);
+
 }
 
 void page_fault_handler(uint32_t error_code)
