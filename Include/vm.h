@@ -37,9 +37,20 @@ typedef struct
     uint32_t table_addr : 20;
 } page_directory_entry_t;
 
+#define HEAP_ADDR 0xc0400000
+#define HEAP_SIZE 0xc0600000 - 0xc0400000
 void *setup_identity_mapping();
-void map_page(void *physaddr, void *virtualaddr, unsigned int flags);
+void map_page(void *physaddr, void *virtualaddr, unsigned int flags, page_table_entry_t *page_table);
+void unmap_page(void *virtual_address, page_table_entry_t *page_table);
 void page_fault_handler(uint32_t error_code);
 void init_recursivePage();
-uint32_t* virt_to_phys(void* virtual);
+void *kalloc(uint32_t size);
+uint32_t *virt_to_phys(void *virtual);
+void init_kalloc();
+extern Buddy bud;
+extern page_table_entry_t page_table[1024];
+extern page_table_entry_t page_table2[1024];
+extern page_table_entry_t page_table3[1024];
+extern page_table_entry_t page_table4[1024];
+extern page_directory_entry_t page_directory[1024];
 #endif VM_H // DEBUG

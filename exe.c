@@ -97,7 +97,7 @@ void *elf_load_file(void *file)
     switch (hdr->e_type)
     {
     case ET_EXEC:
-        need_malloc;
+        balloc();
         return 0;
     case ET_REL:
         return elf_load_rel(hdr);
@@ -202,7 +202,7 @@ static int elf_load_stage1(ELFHeader *hdr)
             if (section->sh_flags & SHF_ALLOC)
             {
 
-                void *mem = balloc(section->sh_size);
+                void *mem = balloc( ,section->sh_size);
                 memset(mem, 0, section->sh_size);
                 section->sh_offset = (int)mem - (int)hdr;
             }

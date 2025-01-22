@@ -61,5 +61,6 @@
     "clock.h": "c",
     "charconv": "c",
     "xmemory": "c"
-  }
+  },
+  "C_Cpp.errorSquiggles": "disabled"
 }

@@ -7,9 +7,6 @@
 #include "keyboard.h"
 #include "clock.h"
 
-
-
-
 void abc();
 int _start()
 {
@@ -23,8 +20,8 @@ int _start()
 
     asm volatile("mov %0, %%cr0" ::"r"(cr0));
 
-    abc();
-    map_page(0xB8000, 0xC0150000, 0);
+    MoveHigherHalf();
+    map_page(0xB8000, 0xC0150000, 0, page_table2);
     init_idt();
     load_idt();
 
@@ -34,7 +31,7 @@ int _start()
         char *err = "couldnt find ahci\n";
         print(err);
     }
-    map_page(ahci_add, 0xc0120000, 0);
+    map_page(ahci_add, 0xc0120000, 0, page_table2);
     HBA_MEM *abar = (HBA_MEM *)(0xc0120000);
 
     probe_port(abar);
@@ -42,8 +39,8 @@ int _start()
     char *port1 = (char *)(abar) + 0x100;
     HBA_PORT *port = (HBA_PORT *)(port1);
     char num[32]; // Issue command
-    
-    print_int((void*)virt_to_phys(0xC0150000), 16);
+
+    print_int((void *)virt_to_phys(0xC0150000), 16);
 
     port_rebase(port, 0);
     for (int i = 0; i < IDT_SIZE; i++)
@@ -60,52 +57,31 @@ int _start()
         0x08,                                    // Code segment selector
         0x8E                                     // Type attribute: present, privilege 0, 32-bit interrupt gate
     );
-    
-    
-    
+
     asm volatile("sti");
     FatInitImage(port);
+
     clear_screen();
     enable_keyboard_interrupt();
-    print("test buddy: \n"); 
-    Buddy bud;
-    bud.base_address = 0x200000;
-    bud.max_order = 3;
-    bud.total_size = 0x1000000;
-
-    init_buddy(&bud);
-    int i = 5;
-    
-    void* ptr = balloc(&bud, 0x2000);
-    char* no[32];
-    int_to_string((uint32_t)ptr,no,16);
-    print(no);
-    print("\n");
-    bfree(&bud, ptr,1);
-    ptr = balloc(&bud, 0x2000);
-   
-    int_to_string((uint32_t)ptr,no,16);
-    print(no);
-    print("\n");
-   
-    
-   
-    
-
-
-
+    print("test kmalloc: \n");
+    init_kalloc();
+    uint32_t *ptr = kalloc(0x1000);
+    print_int(ptr, 16);
 
     while (1)
     {
     }
     return 0;
 }
-void abc()
+void MoveHigherHalf()
 {
-
-    asm volatile("pop %eax");
-    asm volatile("pop %eax");
-    asm volatile("add $0xc0000000, %eax");
-    asm volatile("add $0xc0200000, %esp");
-    asm volatile("jmp *%eax");
+    asm volatile(
+        "pop %%eax\n"
+        "pop %%eax\n"
+        "add $0xc0000000, %%eax\n"
+        "add $0xc0700000, %%esp\n"
+        "jmp *%%eax"
+        :
+        :
+        : "eax", "esp");
 }
