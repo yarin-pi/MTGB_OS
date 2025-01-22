@@ -1,6 +1,6 @@
 #ifndef STD_H
 #define STD_H
-#define HIGHER_HALF(addr) ((void*)((uint32_t)(addr) + 0xC0000000))
+#define HIGHER_HALF(addr) ((void *)((uint32_t)(addr) + 0xC0000000))
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
@@ -44,4 +44,6 @@ void outb(uint16_t port, uint8_t value);
 uint8_t inb(uint16_t port);
 int strcmp(const char *str1, const char *str2, uint32_t n);
 int pow(int a, int b);
+char *append_strings(const char *str1, const char *str2);
+
 #endif STD_H

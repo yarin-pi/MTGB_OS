@@ -1,18 +1,23 @@
 #ifndef EXE_H
 #define EXE_H
-
+typedef unsigned char uint8_t;
+typedef unsigned short uint16_t;
+typedef unsigned int uint32_t;
+typedef unsigned long long uint64_t;
 #define ELF_NIDENT 16
 #define ELF_RELOC_ERR -1
 #define ELF32_R_SYM(INFO) ((INFO) >> 8)
 #define ELF32_R_TYPE(INFO) ((uint8_t)(INFO))
 #define DO_386_32(S, A) ((S) + (A))
 #define DO_386_PC32(S, A, P) ((S) + (A) - (P))
+
 enum RtT_Types
 {
     R_386_NONE = 0, // No relocation
     R_386_32 = 1,   // Symbol + Offset
     R_386_PC32 = 2  // Symbol + Offset - Section Offset
 };
+
 enum Elf_Ident
 {
     EI_MAG0 = 0,       // 0x7F
@@ -26,12 +31,14 @@ enum Elf_Ident
     EI_ABIVERSION = 8, // OS Specific
     EI_PAD = 9         // Padding
 };
+
 enum Elf_Type
 {
-    ET_NONE = 0, // Unkown Type
+    ET_NONE = 0, // Unknown Type
     ET_REL = 1,  // Relocatable File
     ET_EXEC = 2  // Executable File
 };
+
 typedef struct
 {
     uint32_t sh_name;
@@ -45,8 +52,10 @@ typedef struct
     uint32_t sh_addralign;
     uint32_t sh_entsize;
 } SectionHeader;
+
 #define SHN_UNDEF (0x00) // Undefined/Not Present
 #define SHN_ABS 0xFFF1   // Absolute symbol
+
 typedef struct
 {
     uint32_t r_offset;
@@ -59,6 +68,7 @@ typedef struct
     uint32_t r_info;
     uint32_t r_addend;
 } Elf32_Rela;
+
 enum ShT_Types
 {
     SHT_0 = 0,        // 0 section
@@ -75,6 +85,7 @@ enum ShT_Attributes
     SHF_WRITE = 0x01, // Writable section
     SHF_ALLOC = 0x02  // Exists in memory
 };
+
 typedef struct
 {
     uint32_t st_name;
@@ -101,6 +112,7 @@ enum StT_Types
     STT_OBJECT = 1, // Variables, arrays, etc.
     STT_FUNC = 2    // Methods or functions
 };
+
 #define EM_386 (3)     // x86 Machine Type
 #define EV_CURRENT (1) // ELF Current Version
 
@@ -144,6 +156,16 @@ typedef struct
     uint32_t p_align;
 } ProgramHeader;
 
-int validate_elf(ELFHeader *header);
+// Function declarations
+uint32_t validate_elf(ELFHeader *header);
+SectionHeader *elf_sheader(ELFHeader *hdr);
+SectionHeader *elf_section(ELFHeader *hdr, int idx);
+uint32_t elf_load_stage1(ELFHeader *hdr);
+void *elf_load_file(void *file);
+void parse_program_headers(ELFHeader *hdr);
+void *elf_load_rel(ELFHeader *hdr);
+uint32_t elf_do_reloc(ELFHeader *hdr, Elf32_Rel *rel, SectionHeader *reltab);
+void *elf_lookup_symbol(const char *name, ELFHeader *hdr);
+uint32_t elf_get_symval(ELFHeader *hdr, int table, uint32_t idx);
 
 #endif // EXE_H

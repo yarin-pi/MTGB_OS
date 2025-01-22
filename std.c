@@ -1,5 +1,5 @@
 #include "std.h"
-
+#include "vm.h"
 void reverse(char str[], int length)
 {
     int start = 0;
@@ -141,9 +141,56 @@ int strcmp(const char *str1, const char *str2, uint32_t n)
 int pow(int a, int b)
 {
     int x = 1;
-    for(int i = 0; i < b; i++)
+    for (int i = 0; i < b; i++)
     {
         x = a * x;
     }
     return x;
+}
+
+uint32_t get_string_size(char *str)
+{
+    uint32_t size = 0;
+
+    // Loop through the string until we encounter the null-terminator
+    while (str[size] != '\0')
+    {
+        size++;
+    }
+
+    return size;
+}
+
+char *append_strings(const char *str1, const char *str2)
+{
+    // Get the sizes of the two strings
+    uint32_t len1 = 0, len2 = 0;
+    while (str1[len1] != '\0')
+        len1++;
+    while (str2[len2] != '\0')
+        len2++;
+
+    // Allocate memory for the combined string (+1 for null-terminator)
+    char *result = (char *)kalloc(len1 + len2 + 1);
+    if (!result)
+    {
+        return NULL; // Handle memory allocation failure
+    }
+
+    // Copy the first string
+    for (uint32_t i = 0; i < len1; i++)
+    {
+        result[i] = str1[i];
+    }
+
+    // Append the second string
+    for (uint32_t i = 0; i < len2; i++)
+    {
+        result[len1 + i] = str2[i];
+    }
+
+    // Null-terminate the result
+    result[len1 + len2] = '\0';
+
+    return result;
 }

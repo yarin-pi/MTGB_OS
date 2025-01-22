@@ -2,8 +2,10 @@
 #include "std.h"
 #include "print.h"
 #include "process.h"
-#include "pm.h"
-int validate_elf(ELFHeader *header)
+#include "vm.h"
+
+#define NULL 0
+uint32_t validate_elf(ELFHeader *header)
 {
     if (!header)
         return FALSE;
@@ -67,17 +69,18 @@ void parse_program_headers(ELFHeader *hdr)
     print("Parsing program headers:\n");
     ProgramHeader *ph = (ProgramHeader *)((char *)hdr + hdr->e_phoff);
 }
-static inline void *elf_load_rel(ELFHeader *hdr)
+void *elf_load_rel(ELFHeader *hdr)
 {
-    int result;
-    result = elf_load_stage1(hdr);
-    if (result == ELF_RELOC_ERR)
+    uint32_t result1;
+    result1 = elf_load_stage1(hdr);
+    if (result1 == ELF_RELOC_ERR)
     {
         ERROR("Unable to load ELF file.\n");
         return 0;
     }
-    result = elf_load_stage2(hdr);
-    if (result == ELF_RELOC_ERR)
+    uint32_t result2;
+    result2 = elf_load_stage2(hdr);
+    if (result2 == ELF_RELOC_ERR)
     {
         ERROR("Unable to load ELF file.\n");
         return 0;
@@ -97,38 +100,43 @@ void *elf_load_file(void *file)
     switch (hdr->e_type)
     {
     case ET_EXEC:
-        balloc();
-        return 0;
+        if (!hdr->e_entry)
+        {
+            ERROR("Invalid entry point.\n");
+            return NULL;
+        }
+        parse_program_headers(hdr);
+        return (void *)hdr->e_entry;
     case ET_REL:
         return elf_load_rel(hdr);
     }
     return 0;
 }
-static inline SectionHeader *elf_sheader(ELFHeader *hdr)
+SectionHeader *elf_sheader(ELFHeader *hdr)
 {
     return (SectionHeader *)((int)hdr + hdr->e_shoff);
 }
 
-static inline SectionHeader *elf_section(ELFHeader *hdr, int idx)
+SectionHeader *elf_section(ELFHeader *hdr, int idx)
 {
     return &elf_sheader(hdr)[idx];
 }
 
-static inline char *elf_str_table(ELFHeader *hdr)
+char *elf_str_table(ELFHeader *hdr)
 {
     if (hdr->e_shstrndx == SHN_UNDEF)
         return 0;
     return (char *)hdr + elf_section(hdr, hdr->e_shstrndx)->sh_offset;
 }
 
-static inline char *elf_lookup_string(ELFHeader *hdr, int offset)
+char *elf_lookup_string(ELFHeader *hdr, int offset)
 {
     char *strtab = elf_str_table(hdr);
     if (strtab == 0)
         return 0;
     return strtab + offset;
 }
-static int elf_get_symval(ELFHeader *hdr, int table, uint32_t idx)
+uint32_t elf_get_symval(ELFHeader *hdr, int table, uint32_t idx)
 {
     if (table == SHN_UNDEF || idx == SHN_UNDEF)
         return 0;
@@ -148,8 +156,7 @@ static int elf_get_symval(ELFHeader *hdr, int table, uint32_t idx)
         SectionHeader *strtab = elf_section(hdr, symtab->sh_link);
         const char *name = (const char *)hdr + strtab->sh_offset + symbol->st_name;
 
-        extern void *elf_lookup_symbol(const char *name);
-        void *target = elf_lookup_symbol(name);
+        void *target = elf_lookup_symbol(name, hdr);
 
         if (target == 0)
         {
@@ -182,7 +189,7 @@ static int elf_get_symval(ELFHeader *hdr, int table, uint32_t idx)
         return (int)hdr + symbol->st_value + target->sh_offset;
     }
 }
-static int elf_load_stage1(ELFHeader *hdr)
+uint32_t elf_load_stage1(ELFHeader *hdr)
 {
     SectionHeader *shdr = elf_sheader(hdr);
 
@@ -202,7 +209,7 @@ static int elf_load_stage1(ELFHeader *hdr)
             if (section->sh_flags & SHF_ALLOC)
             {
 
-                void *mem = balloc( ,section->sh_size);
+                void *mem = kalloc(section->sh_size);
                 memset(mem, 0, section->sh_size);
                 section->sh_offset = (int)mem - (int)hdr;
             }
@@ -211,7 +218,7 @@ static int elf_load_stage1(ELFHeader *hdr)
     return 0;
 }
 
-static int elf_load_stage2(ELFHeader *hdr)
+uint32_t elf_load_stage2(ELFHeader *hdr)
 {
     SectionHeader *shdr = elf_sheader(hdr);
 
@@ -240,8 +247,82 @@ static int elf_load_stage2(ELFHeader *hdr)
     }
     return 0;
 }
+void *elf_lookup_symbol(const char *name, ELFHeader *hdr)
+{
+    if (!name || name[0] == '\0')
+    {
+        ERROR("Invalid symbol name.\n");
+        return NULL;
+    }
 
-static int elf_do_reloc(ELFHeader *hdr, Elf32_Rel *rel, SectionHeader *reltab)
+    // Iterate through the section headers
+    SectionHeader *shdr = elf_sheader(hdr);
+
+    for (int i = 0; i < hdr->e_shnum; i++)
+    {
+        SectionHeader *section = &shdr[i];
+
+        // Check for the symbol table section
+        if (section->sh_type == SHT_SYMTAB)
+        {
+            // Symbol table found, iterate through its entries
+            int symtab_entries = section->sh_size / section->sh_entsize;
+            SymbolHeader *symbol = (SymbolHeader *)((int)hdr + section->sh_offset);
+
+            // Iterate through each symbol in the symbol table
+            for (int idx = 0; idx < symtab_entries; idx++)
+            {
+                const char *symbol_name = append_strings((const char *)hdr, elf_lookup_string(hdr, symbol[idx].st_name));
+
+                if (strcmp(name, symbol_name, strlen(name)) == 0)
+                {
+                    // Found the symbol, handle its binding and return the address
+
+                    if (symbol[idx].st_shndx == SHN_UNDEF)
+                    {
+                        // External symbol, perform lookup
+                        SectionHeader *strtab = elf_section(hdr, section->sh_link); // Get the string table
+                        const char *external_name = elf_lookup_string(hdr, symbol[idx].st_name);
+                        void *target = elf_lookup_symbol(external_name, hdr);
+
+                        if (target == NULL)
+                        {
+                            // If external symbol isn't found, check if weak
+                            if (ELF32_ST_BIND(symbol[idx].st_info) == STB_WEAK)
+                            {
+                                return NULL; // Weak symbols resolve to 0
+                            }
+                            else
+                            {
+                                return (void *)ELF_RELOC_ERR; // Undefined symbol, error
+                            }
+                        }
+                        else
+                        {
+                            return target; // Return the symbol's address
+                        }
+                    }
+                    else if (symbol[idx].st_shndx == SHN_ABS)
+                    {
+                        // Absolute symbol
+                        return (void *)(symbol[idx].st_value);
+                    }
+                    else
+                    {
+                        // Internal symbol, resolve address within the section
+                        SectionHeader *target_section = elf_section(hdr, symbol[idx].st_shndx);
+                        return (void *)((int)hdr + symbol[idx].st_value + target_section->sh_offset);
+                    }
+                }
+            }
+        }
+    }
+
+    // If the symbol wasn't found
+    ERROR("Symbol not found: %s\n", name);
+    return (void *)ELF_RELOC_ERR;
+}
+uint32_t elf_do_reloc(ELFHeader *hdr, Elf32_Rel *rel, SectionHeader *reltab)
 {
     SectionHeader *target = elf_section(hdr, reltab->sh_info);
 
