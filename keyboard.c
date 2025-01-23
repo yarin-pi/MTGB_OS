@@ -7,7 +7,7 @@ __attribute__((interrupt, target("general-regs-only"))) void keyboard_handler(st
 {
     uint8_t scancode = inb(KEYBOARD_DATA_PORT);
     uint8_t c = scancode_to_char(scancode);
-    identifier = true;
+    identifier = TRUE;
 
     if (c != 0 && c != '\0') // Only valid and non-null characters
     {
@@ -121,5 +121,3 @@ void enable_keyboard_interrupt()
     outb(PIC1_DATA, 0xFD); // OCW1: Unmask IRQ1 (keyboard), mask all others
     outb(PIC2_DATA, 0xFF); // OCW1: Mask all IRQs on slave
 }
-
-

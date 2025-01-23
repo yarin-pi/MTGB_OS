@@ -174,7 +174,7 @@ char *append_strings(const char *str1, const char *str2)
     char *result = (char *)kalloc(len1 + len2 + 1);
     if (!result)
     {
-        return NULL; // Handle memory allocation failure
+        return 0; // Handle memory allocation failure
     }
 
     // Copy the first string

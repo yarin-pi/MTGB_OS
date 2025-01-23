@@ -75,14 +75,14 @@ void *elf_load_rel(ELFHeader *hdr)
     result1 = elf_load_stage1(hdr);
     if (result1 == ELF_RELOC_ERR)
     {
-        ERROR("Unable to load ELF file.\n");
+        print("Unable to load ELF file.\n");
         return 0;
     }
     uint32_t result2;
     result2 = elf_load_stage2(hdr);
     if (result2 == ELF_RELOC_ERR)
     {
-        ERROR("Unable to load ELF file.\n");
+        print("Unable to load ELF file.\n");
         return 0;
     }
     parse_program_headers(hdr);
@@ -102,7 +102,7 @@ void *elf_load_file(void *file)
     case ET_EXEC:
         if (!hdr->e_entry)
         {
-            ERROR("Invalid entry point.\n");
+            print("Invalid entry point.\n");
             return NULL;
         }
         parse_program_headers(hdr);
@@ -251,7 +251,7 @@ void *elf_lookup_symbol(const char *name, ELFHeader *hdr)
 {
     if (!name || name[0] == '\0')
     {
-        ERROR("Invalid symbol name.\n");
+        print("Invalid symbol name.\n");
         return NULL;
     }
 
@@ -319,7 +319,8 @@ void *elf_lookup_symbol(const char *name, ELFHeader *hdr)
     }
 
     // If the symbol wasn't found
-    ERROR("Symbol not found: %s\n", name);
+    print("Symbol not found: ");
+    print(name);
     return (void *)ELF_RELOC_ERR;
 }
 uint32_t elf_do_reloc(ELFHeader *hdr, Elf32_Rel *rel, SectionHeader *reltab)

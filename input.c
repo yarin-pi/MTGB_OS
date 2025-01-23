@@ -1,5 +1,6 @@
 #include "input.h"
 abool identifier = 1;
+
 void process_input(const char *input)
 {
     if (strcmp(input, "cls", 4) == 0)
@@ -46,4 +47,3 @@ void process_input(const char *input)
         print(" is an unknown command\n");
     }
 }
-
