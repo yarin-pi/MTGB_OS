@@ -45,6 +45,7 @@ void unmap_page(void *virtual_address, page_table_entry_t *page_table);
 void page_fault_handler(uint32_t error_code);
 void init_recursivePage();
 void *kalloc(uint32_t size);
+void kfree(void *addr, uint32_t size);
 uint32_t *virt_to_phys(void *virtual);
 void init_kalloc();
 extern Buddy bud;
