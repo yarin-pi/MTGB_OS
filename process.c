@@ -1,5 +1,4 @@
 #include "process.h"
-#define MAX_PROCESSES 256
 Process processTable[MAX_PROCESSES] = {0};
 
 // Find an available process slot
