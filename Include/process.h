@@ -6,13 +6,6 @@
 #define MAX_PROCESSES 256
 
 // Process state enum (you can define READY, RUNNING, BLOCKED, etc.)
-typedef enum
-{
-    READY,
-    RUNNING,
-    BLOCKED,
-    TERMINATED
-} state;
 
 // Process structure
 typedef struct Process
