@@ -65,7 +65,9 @@ void suspendProcess(uint32_t processID)
 // Resume a process
 void resumeProcess(uint32_t processID)
 {
-    if (processID == 0 || processID > MAX_PROCESSES || processTable[processID - 1].pid == 0)
+    int isProcessInvalid = processID == 0 || processID > MAX_PROCESSES || processTable[processID - 1].pid == 0;
+    
+    if (isProcessInvalid)
     {
         return; // Invalid process ID
     }

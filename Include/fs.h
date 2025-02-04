@@ -41,7 +41,7 @@ typedef struct {
     uint16_t write_date;
     uint32_t file_size;    
     uint16_t cluster_index;      // File size in bytes
-} __attribute__((packed)) DirEntry; //add __attribute__((packed))
+} /*__attribute__((packed))*/ DirEntry; //add __attribute__((packed))
 
 
 
@@ -72,4 +72,5 @@ uint16_t FatAddData( void *data, uint32_t size);
 void FatRemoveData( uint32_t rootClusterIndex);
 uint32_t FatAddFile(const char *path, const void *data, uint32_t size);
 void FatRemoveFile(uint32_t entry);
+int getContent(const char* name, void* arr);
 #endif FS_H

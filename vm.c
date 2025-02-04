@@ -157,6 +157,7 @@ void init_kalloc()
     bud.max_order = 3;
     init_buddy(&bud);
 }
+
 void *kalloc(uint32_t size)
 {
     if (size > (1 << 15))

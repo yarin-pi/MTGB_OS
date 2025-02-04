@@ -411,3 +411,42 @@ void FatRemoveFile(uint32_t index)
     FatRemoveData(tmp[idx].cluster_index);
     FatRemoveDirEntry(index);
 }
+
+int getContent(const char* path, void* arr)
+{
+    char name[8];
+    char ext[3];
+    DirEntry tmp[32];
+    FatSplitPath(name,ext,path);
+    uint32_t root = GetRootDirectory();
+    read_ahci(port_ptr,root,0,2,(uint16_t*)tmp);
+
+    for(int i = 0; i < 32; i++)
+    {
+        DirEntry x = tmp[i];
+        if(!strcmp(x.filename,name,strlen(name)))
+        {
+            uint16_t cluster_idx = x.low_cluster_index;
+            int cluster_offset;
+            int cluster_value;
+            int arr_idx = 0;
+            while (true)
+            {
+                cluster_offset = GetClusterOffset(cluster_idx);
+                cluster_value = GetClusterValue(0,cluster_idx);
+                read_ahci(port_ptr,cluster_offset,0,1,(uint16_t*)(arr + arr_idx));
+                if(cluster_value == 0xffff)
+                {
+                    break;
+                }
+                arr_idx += 512;
+                cluster_idx = cluster_value;
+            }
+            break;
+        }
+    }
+}
+
+
+
+
