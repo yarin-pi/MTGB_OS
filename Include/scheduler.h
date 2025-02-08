@@ -5,15 +5,18 @@
 struct kprocess
 {
     unsigned int pid;
-    unsigned int parent_pid;
-    int nice;
     unsigned int num_threads;
     struct kthread *threads;
     struct list_head list;
 };
+struct kthread
+{
+    unsigned int tid;
+    unsigned int parent_pid;
+};
 void scheduler_init(void);
 void scheduler_next(void);
-struct pcb *init_task(int nice, unsigned int ppid);
-void schedule_thread(struct tcb *thread);
-void switch_thread(struct tcb *old, struct tcb *new);
+struct kprocess *init_task(unsigned int ppid);
+void schedule_thread(struct kthread *thread);
+void switch_thread(struct kthread *old, struct kthread *new);
 #endif SCHEDULER_H

@@ -60,7 +60,8 @@
     "thread": "cpp",
     "clock.h": "c",
     "charconv": "c",
-    "xmemory": "c"
+    "xmemory": "c",
+    "scheduler.h": "c"
   },
   "C_Cpp.errorSquiggles": "disabled"
 }

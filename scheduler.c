@@ -5,7 +5,7 @@ static struct kthread *cur = NULL;
 
 static int scheduler_enabled = 0;
 
-void sched_init(void)
+void scheduler_init(void)
 {
     cur = kthread_create(NULL, NULL);
     cur->stack = NULL;
@@ -14,7 +14,7 @@ void sched_init(void)
     scheduler_enabled = 1;
 }
 
-void schedule_next(void)
+void scheduler_next(void)
 {
     if (scheduler_enabled == 0)
         return;
