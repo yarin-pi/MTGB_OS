@@ -29,10 +29,11 @@ void scheduler_next(void);
 void schedule_thread(struct kthread *thread);
 void switch_thread(struct kthread *old, struct kthread *new);
 struct kprocess *init_task(void);
-void create_process(void);
 void destroy_process(struct kprocess *proc);
 
 // Thread management functions
 struct kthread *create_thread(struct kprocess *proc, void *entry);
 void destroy_thread(struct kthread *thread);
+void update_time_slice(void); // Function to update time slice for threads and processes
+void reset_time_slice(struct kthread *thread);
 #endif SCHEDULER_H
