@@ -1,22 +1,38 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 #include "std.h"
-#include "list_head.h"
-struct kprocess
-{
-    unsigned int pid;
-    unsigned int num_threads;
-    struct kthread *threads;
-    struct list_head list;
-};
+#define MAX_THREADS 32
 struct kthread
 {
-    unsigned int tid;
-    unsigned int parent_pid;
+    state s;
+    uint32_t *stack;
+    uint32_t tid;
+    uint32_t parent_pid;
+    uint32_t timeSlice;
+    struct kthread *next;
+    void *arg;
 };
+
+struct kprocess
+{
+    state s;
+    uint32_t pid;
+    uint32_t num_threads;
+    uint32_t timeSlice;
+    struct kthread *threads[MAX_THREADS];
+    void *arg;
+};
+
+// Scheduler functions
 void scheduler_init(void);
 void scheduler_next(void);
-struct kprocess *init_task(unsigned int ppid);
 void schedule_thread(struct kthread *thread);
 void switch_thread(struct kthread *old, struct kthread *new);
+struct kprocess *init_task(void);
+void create_process(void);
+void destroy_process(struct kprocess *proc);
+
+// Thread management functions
+struct kthread *create_thread(struct kprocess *proc, void *entry);
+void destroy_thread(struct kthread *thread);
 #endif SCHEDULER_H
