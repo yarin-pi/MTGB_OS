@@ -19,6 +19,7 @@ struct kprocess
     uint32_t pid;
     uint32_t num_threads;
     uint32_t timeSlice;
+    struct kprocess *next;
     struct kthread *threads[MAX_THREADS];
     void *arg;
 };

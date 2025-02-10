@@ -1,4 +1,5 @@
 #include "input.h"
+#include "clock.h"
 abool identifier = 1;
 
 void process_input(const char *input)
@@ -7,7 +8,7 @@ void process_input(const char *input)
     {
         clear_screen();
     }
-    else if (strcmp(input, "echo", 3) == 0)
+    else if (strcmp(input, "echo ", 5) == 0)
     {
         char output[100];
         int i = 0;
@@ -39,6 +40,10 @@ void process_input(const char *input)
         print("\nExiting...\n");
         while (1)
             ;
+    }
+    else if (strcmp(input, "tick", 5) == 0)
+    {
+        print_int(pit_ticks, 10);
     }
     else
     {

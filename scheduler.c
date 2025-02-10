@@ -1,9 +1,9 @@
 #include "scheduler.h"
 #include "vm.h"
-static struct kprocess *run_queue = NULL;
-static struct kprocess *wait_queue = NULL;
-static struct kthread *cur_thread = NULL;
-static struct kprocess *cur_process = NULL;
+static struct kprocess *run_queue = 0;
+static struct kprocess *wait_queue = 0;
+static struct kthread *cur_thread = 0;
+static struct kprocess *cur_process = 0;
 
 static uint32_t next_pid = 1;
 static uint32_t next_tid = 1;
@@ -13,8 +13,8 @@ static int scheduler_enabled = 0;
 void scheduler_init(void)
 {
     cur_process = init_task();
-    cur_thread = create_thread(cur_process, NULL);
-    cur_thread->stack = NULL;
+    cur_thread = create_thread(cur_process, 0);
+    cur_thread->stack = 0;
     switch_thread(cur_thread, cur_thread);
     cur_thread->s = RUNNING;
     scheduler_enabled = 1;
@@ -25,7 +25,7 @@ void scheduler_next(void)
     if (scheduler_enabled == 0)
         return;
 
-    if (run_queue == NULL)
+    if (run_queue == 0)
         return;
 
     struct kthread *thread = cur_thread;
@@ -38,7 +38,7 @@ void scheduler_next(void)
         schedule_thread(cur_thread);
         cur_thread = run_queue;
         run_queue = run_queue->next;
-        cur_thread->next = NULL;
+        cur_thread->next = 0;
         cur_thread->s = RUNNING;
         switch_thread(thread, cur_thread);
     }
@@ -46,14 +46,14 @@ void scheduler_next(void)
 
 void schedule_thread(struct kthread *thread)
 {
-    if (run_queue == NULL)
+    if (run_queue == 0)
     {
         run_queue = thread;
         return;
     }
 
     struct kthread *temp = run_queue;
-    while (temp->next != NULL)
+    while (temp->next != 0)
         temp = temp->next;
     temp->next = thread;
     thread->s = READY;
@@ -61,7 +61,7 @@ void schedule_thread(struct kthread *thread)
 
 void update_time_slice(void)
 {
-    if (cur_thread != NULL)
+    if (cur_thread != 0)
     {
         if (cur_thread->timeSlice > 0)
         {
@@ -73,7 +73,7 @@ void update_time_slice(void)
         }
     }
 
-    if (cur_process != NULL)
+    if (cur_process != 0)
     {
         if (cur_process->timeSlice > 0)
         {
@@ -96,13 +96,13 @@ struct kprocess *init_task(void)
 {
     struct kprocess *proc = kalloc(sizeof(struct kprocess));
     if (!proc)
-        return NULL;
+        return 0;
 
     proc->pid = next_pid++;
     proc->num_threads = 0;
     proc->timeSlice = 10;
     proc->s = READY;
-    proc->next = NULL;
+    proc->next = 0;
     return proc;
 }
 
@@ -114,21 +114,21 @@ void destroy_process(struct kprocess *proc)
     for (uint32_t i = 0; i < proc->num_threads; i++)
         destroy_thread(proc->threads[i]);
 
-    kfree(proc);
+    kfree(proc, sizeof(struct kprocess));
 }
 
 struct kthread *create_thread(struct kprocess *proc, void *entry)
 {
     struct kthread *thread = kalloc(sizeof(struct kthread));
     if (!thread)
-        return NULL;
+        return 0;
 
     thread->tid = next_tid++;
     thread->parent_pid = proc ? proc->pid : 0;
     thread->timeSlice = 5;
     thread->stack = kalloc(4096);
     thread->s = READY;
-    thread->next = NULL;
+    thread->next = 0;
     thread->arg = entry;
 
     if (proc)

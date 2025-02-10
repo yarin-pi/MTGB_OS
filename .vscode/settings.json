@@ -61,7 +61,9 @@
     "clock.h": "c",
     "charconv": "c",
     "xmemory": "c",
-    "scheduler.h": "c"
+    "scheduler.h": "c",
+    "std.h": "c",
+    "idt.h": "c"
   },
   "C_Cpp.errorSquiggles": "disabled"
 }
