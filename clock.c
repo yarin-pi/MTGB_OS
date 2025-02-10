@@ -27,6 +27,10 @@ void wait_ticks(uint32_t ticks)
 
 void clock_init()
 {
-    pit_set_frequency(1000); // Set PIT to 1000 Hz (1ms per tick)
-    set_idt_entry(32, (uint32_t)HIGHER_HALF(pit_isr), 0x08, 0x8E);
+    pit_set_frequency(1); // Set PIT to 1000 Hz (1s per tick)
+    set_idt_entry(0, (uint32_t)HIGHER_HALF(pit_isr), 0x08, 0x8E);
+}
+int return_tick()
+{
+    return pit_ticks;
 }

@@ -55,7 +55,7 @@ int _start()
         0x08,                                    // Code segment selector
         0x8E                                     // Type attribute: present, privilege 0, 32-bit interrupt gate
     );
-
+    clock_init();
     asm volatile("sti");
     FatInitImage(port);
 
@@ -65,7 +65,6 @@ int _start()
     init_kalloc();
     uint32_t *ptr = kalloc(0x1000);
     print_int(ptr, 16);
-    clock_init();
 
     while (1)
     {

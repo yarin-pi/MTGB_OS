@@ -43,7 +43,8 @@ void process_input(const char *input)
     }
     else if (strcmp(input, "tick", 5) == 0)
     {
-        print_int(pit_ticks, 10);
+        print("\n");
+        print_int(return_tick(), 10);
     }
     else
     {
