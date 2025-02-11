@@ -58,11 +58,12 @@ int _start()
     clock_init();
     asm volatile("sti");
     FatInitImage(port);
-
+    char* arrxe = (char*)kalloc(1400);
+    getContent("/del.txt",(void*)arrxe);
     clear_screen();
     enable_keyboard_interrupt();
-    print("test kmalloc: \n");
-    init_kalloc();
+    
+    
     uint32_t *ptr = kalloc(0x1000);
     print_int(ptr, 16);
 
