@@ -93,10 +93,9 @@ uint32_t GetClusterOffset(uint32_t clusterIndex)
     uint16_t tmp[256];
     read_ahci(port_ptr, 0, 0, 1, tmp);
     bpb = *(BootSector *)tmp;
-
-    return (bpb.reserved_sectors + bpb.num_fats * bpb.fat_size_sectors) +
-           bpb.root_entries * sizeof(DirEntry) +
-           (clusterIndex) * (bpb.sectors_per_cluster);
+    uint32_t root_dir_sectors = (bpb.root_entries * 32) / bpb.bytes_per_sector;
+    uint32_t data_start = (bpb.reserved_sectors + (bpb.num_fats * bpb.fat_size_sectors) + root_dir_sectors);
+    return data_start + (clusterIndex - 2) * (bpb.sectors_per_cluster);
 }
 
 uint32_t GetRootDirectory()
@@ -276,7 +275,7 @@ void FatUpdateDirEntry(uint32_t index, uint16_t clusterIndex, const uint8_t name
     uint32_t root = GetRootDirectory();
     read_ahci(port_ptr, root + index / 16, 0, 1, (uint16_t *)tmp);
     unsigned int idx = index % 16;
-    tmp[idx].cluster_index = clusterIndex;
+    tmp[idx].low_cluster_index = clusterIndex;
 
     memcpy(tmp[idx].filename, name, sizeof(name));
     memcpy(tmp[idx].ext, ext, sizeof(ext));
@@ -408,7 +407,7 @@ void FatRemoveFile(uint32_t index)
     uint32_t root = GetRootDirectory();
     read_ahci(port_ptr, root + index / 16, 0, 1, (uint16_t *)tmp);
     int idx = index % 16;
-    FatRemoveData(tmp[idx].cluster_index);
+    FatRemoveData(tmp[idx].low_cluster_index);
     FatRemoveDirEntry(index);
 }
 
@@ -424,13 +423,14 @@ int getContent(const char* path, void* arr)
     for(int i = 0; i < 32; i++)
     {
         DirEntry x = tmp[i];
-        if(!strcmp(x.filename,name,strlen(name)))
+        
+        if(!fstrcmp(x.filename,name))
         {
             uint16_t cluster_idx = x.low_cluster_index;
             int cluster_offset;
             int cluster_value;
             int arr_idx = 0;
-            while (true)
+            while (1)
             {
                 cluster_offset = GetClusterOffset(cluster_idx);
                 cluster_value = GetClusterValue(0,cluster_idx);

@@ -57,14 +57,15 @@ int _start()
         0x08,                                    // Code segment selector
         0x8E                                     // Type attribute: present, privilege 0, 32-bit interrupt gate
     );
-
+    init_kalloc();
     asm volatile("sti");
     FatInitImage(port);
-
+    char* arrxe = (char*)kalloc(1400);
+    getContent("/del.txt",(void*)arrxe);
     clear_screen();
     enable_keyboard_interrupt();
-    print("test kmalloc: \n");
-    init_kalloc();
+    
+    
     uint32_t *ptr = kalloc(0x1000);
     print_int(ptr, 16);
 
