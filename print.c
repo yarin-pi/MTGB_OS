@@ -97,10 +97,39 @@ void delete_char()
     vga_buffer[cursor_y * VGA_WIDTH + cursor_x] = (DEFAULT_COLOR << 8) | ' ';
     move_cursor();
 }
-void print_int(uint32_t i,int base)
+void print_int(uint32_t i, int base)
 {
-    char* no[32];
-    int_to_string(i,no,base);
+    char *no[32];
+    int_to_string(i, no, base);
     print(no);
     print("\n");
+}
+void print_float(float num)
+{
+    // Handling negative numbers
+    if (num < 0)
+    {
+        print_char('-');
+        num = -num; // Make the number positive for further processing
+    }
+
+    // Integer part
+    uint32_t int_part = (uint32_t)num;
+    print_int(int_part, 10); // Print the integer part
+
+    // Fractional part
+    num = num - int_part; // Get the fractional part
+    if (num > 0)
+    {
+        print_char('.'); // Add the decimal point
+        uint32_t i;
+        for (i = 0; i < 2; i++) // Print up to 2 decimal places
+        {
+            num *= 10;
+            uint32_t fractional_digit = (uint32_t)num;
+            print_char(fractional_digit + '0'); // Convert the digit to a character
+            num -= fractional_digit;
+        }
+    }
+    print("\n"); // New line after printing the float
 }

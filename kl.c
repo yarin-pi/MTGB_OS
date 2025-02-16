@@ -7,7 +7,6 @@
 #include "keyboard.h"
 #include "clock.h"
 
-void abc();
 int _start()
 {
     void *page_directory = setup_identity_mapping();
@@ -48,7 +47,6 @@ int _start()
 
         set_idt_entry(i, (uint32_t)HIGHER_HALF(unhandled_interrupt_handler), 0x08, 0x8E);
     }
-
     set_idt_entry(14, (uint32_t)HIGHER_HALF(page_fault_handler), 0x08, 0x8e);
 
     set_idt_entry(
@@ -57,7 +55,7 @@ int _start()
         0x08,                                    // Code segment selector
         0x8E                                     // Type attribute: present, privilege 0, 32-bit interrupt gate
     );
-
+    clock_init();
     asm volatile("sti");
     FatInitImage(port);
 
