@@ -55,15 +55,5 @@
   "C_Cpp_Runner.useLeakSanitizer": false,
   "C_Cpp_Runner.showCompilationTime": false,
   "C_Cpp_Runner.useLinkTimeOptimization": false,
-  "C_Cpp_Runner.msvcSecureNoWarnings": false,
-  "files.associations": {
-    "thread": "cpp",
-    "clock.h": "c",
-    "charconv": "c",
-    "xmemory": "c",
-    "scheduler.h": "c",
-    "std.h": "c",
-    "idt.h": "c"
-  },
-  "C_Cpp.errorSquiggles": "disabled"
+  "C_Cpp_Runner.msvcSecureNoWarnings": false
 }

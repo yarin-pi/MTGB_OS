@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "c:/Users/Magshimim/Documents/MTGB/netanya-1002-mtgb-os/Include",
-      "program": "c:/Users/Magshimim/Documents/MTGB/netanya-1002-mtgb-os/Include/build/Debug/outDebug",
+      "cwd": "c:/Users/Magshimim/Documents/MTGB/netanya-1002-mtgb-os",
+      "program": "c:/Users/Magshimim/Documents/MTGB/netanya-1002-mtgb-os/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
