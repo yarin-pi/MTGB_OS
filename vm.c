@@ -93,6 +93,19 @@ void unmap_page(void *virtual_address, page_table_entry_t *page_table)
     // Invalidate the TLB for the given virtual address
     asm volatile("invlpg (%0)" : : "r"(virtual_address) : "memory");
 }
+void set_present(void *virtual_address, page_table_entry_t *page_table)
+{
+    uint32_t vaddr = (uint32_t)virtual_address;
+    uint32_t pt_index = (vaddr >> 12) & 0x3FF; // Next 10 bits
+    if (!page_table)
+    {
+        
+        return;
+    }
+
+    page_table[pt_index].present = 1;
+
+}
 uint32_t *virt_to_phys(void *virtual)
 {
     int pdi_index = (unsigned long)virtual >> 22;
@@ -148,6 +161,9 @@ void page_fault_handler(uint32_t error_code)
 void init_recursivePage()
 {
     page_directory[1023].table_addr = page_directory;
+    page_directory[1023].present = 1;
+    page_directory[1023].rw = 1;
+    page_directory[1023].user = 0;
 }
 
 void init_kalloc()
@@ -157,6 +173,7 @@ void init_kalloc()
     bud.max_order = 3;
     init_buddy(&bud);
 }
+
 void *kalloc(uint32_t size)
 {
     if (size > (1 << 15))
@@ -166,7 +183,7 @@ void *kalloc(uint32_t size)
     }
 
     void *phys_ptr = balloc(&bud, size);
-    map_page(phys_ptr, phys_ptr, 0, page_table4);
+    set_present(phys_ptr,page_table4);
 
     return phys_ptr;
 }

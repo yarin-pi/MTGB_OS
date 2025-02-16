@@ -93,10 +93,9 @@ uint32_t GetClusterOffset(uint32_t clusterIndex)
     uint16_t tmp[256];
     read_ahci(port_ptr, 0, 0, 1, tmp);
     bpb = *(BootSector *)tmp;
-
-    return (bpb.reserved_sectors + bpb.num_fats * bpb.fat_size_sectors) +
-           bpb.root_entries * sizeof(DirEntry) +
-           (clusterIndex) * (bpb.sectors_per_cluster);
+    uint32_t root_dir_sectors = (bpb.root_entries * 32) / bpb.bytes_per_sector;
+    uint32_t data_start = (bpb.reserved_sectors + (bpb.num_fats * bpb.fat_size_sectors) + root_dir_sectors);
+    return data_start + (clusterIndex - 2) * (bpb.sectors_per_cluster);
 }
 
 uint32_t GetRootDirectory()
@@ -276,7 +275,7 @@ void FatUpdateDirEntry(uint32_t index, uint16_t clusterIndex, const uint8_t name
     uint32_t root = GetRootDirectory();
     read_ahci(port_ptr, root + index / 16, 0, 1, (uint16_t *)tmp);
     unsigned int idx = index % 16;
-    tmp[idx].cluster_index = clusterIndex;
+    tmp[idx].low_cluster_index = clusterIndex;
 
     memcpy(tmp[idx].filename, name, sizeof(name));
     memcpy(tmp[idx].ext, ext, sizeof(ext));
@@ -408,6 +407,46 @@ void FatRemoveFile(uint32_t index)
     uint32_t root = GetRootDirectory();
     read_ahci(port_ptr, root + index / 16, 0, 1, (uint16_t *)tmp);
     int idx = index % 16;
-    FatRemoveData(tmp[idx].cluster_index);
+    FatRemoveData(tmp[idx].low_cluster_index);
     FatRemoveDirEntry(index);
 }
+
+int getContent(const char* path, void* arr)
+{
+    char name[8];
+    char ext[3];
+    DirEntry tmp[32];
+    FatSplitPath(name,ext,path);
+    uint32_t root = GetRootDirectory();
+    read_ahci(port_ptr,root,0,2,(uint16_t*)tmp);
+
+    for(int i = 0; i < 32; i++)
+    {
+        DirEntry x = tmp[i];
+        
+        if(!fstrcmp(x.filename,name))
+        {
+            uint16_t cluster_idx = x.low_cluster_index;
+            int cluster_offset;
+            int cluster_value;
+            int arr_idx = 0;
+            while (1)
+            {
+                cluster_offset = GetClusterOffset(cluster_idx);
+                cluster_value = GetClusterValue(0,cluster_idx);
+                read_ahci(port_ptr,cluster_offset,0,1,(uint16_t*)(arr + arr_idx));
+                if(cluster_value == 0xffff)
+                {
+                    break;
+                }
+                arr_idx += 512;
+                cluster_idx = cluster_value;
+            }
+            break;
+        }
+    }
+}
+
+
+
+

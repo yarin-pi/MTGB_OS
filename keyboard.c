@@ -1,6 +1,6 @@
 #include "keyboard.h"
 
-int buffer_index = 0;
+int buffer_index;
 
 char input_buffer[BUFFER_SIZE];
 __attribute__((interrupt, target("general-regs-only"))) void keyboard_handler(struct interrupt_frame *frame)
@@ -120,4 +120,5 @@ void enable_keyboard_interrupt()
 
     outb(PIC1_DATA, 0xFD); // OCW1: Unmask IRQ1 (keyboard), mask all others
     outb(PIC2_DATA, 0xFF); // OCW1: Mask all IRQs on slave
+    buffer_index = 0;
 }

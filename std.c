@@ -194,3 +194,7 @@ char *append_strings(const char *str1, const char *str2)
 
     return result;
 }
+int fstrcmp(const char* str1, const char* str2)
+{
+    return strcmp(str1,str2,8);
+}
