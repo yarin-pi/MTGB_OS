@@ -111,8 +111,19 @@ void destroy_process(struct kprocess *proc)
     if (!proc)
         return;
 
+    // Destroy child processes first
+    struct kprocess *child = proc->children;
+    while (child)
+    {
+        struct kprocess *next = child->next;
+        destroy_process(child);
+        child = next;
+    }
+
     for (uint32_t i = 0; i < proc->num_threads; i++)
+    {
         destroy_thread(proc->threads[i]);
+    }
 
     kfree(proc, sizeof(struct kprocess));
 }
@@ -160,4 +171,24 @@ void switch_thread(struct kthread *old, struct kthread *new)
         : "r"(new->stack));
 
     cur_thread = new;
+}
+
+struct kprocess *fork_process(struct kprocess *parent)
+{
+    struct kprocess *child = kalloc(sizeof(struct kprocess));
+    if (!child)
+        return 0;
+
+    child->pid = next_pid++;
+    child->num_threads = 0;
+    child->timeSlice = parent->timeSlice;
+    child->s = READY;
+    child->next = 0;
+    child->parent = parent; // Assign parent process
+
+    // Add to parent's child list
+    child->children = parent->children;
+    parent->children = child;
+
+    return child;
 }

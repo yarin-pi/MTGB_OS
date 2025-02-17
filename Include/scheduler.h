@@ -21,6 +21,8 @@ struct kprocess
     uint32_t timeSlice;
     struct kprocess *next;
     struct kthread *threads[MAX_THREADS];
+    struct kprocess *parent;
+    struct kprocess *children; // Pointer to child processes
     void *arg;
 };
 
@@ -37,4 +39,6 @@ struct kthread *create_thread(struct kprocess *proc, void *entry);
 void destroy_thread(struct kthread *thread);
 void update_time_slice(void); // Function to update time slice for threads and processes
 void reset_time_slice(struct kthread *thread);
+struct kprocess *fork_process(struct kprocess *parent);
+
 #endif SCHEDULER_H
