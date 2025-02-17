@@ -23,6 +23,7 @@ __attribute__((interrupt, target("general-regs-only"))) void unhandled_interrupt
 {
     // Print an error message or halt the system
     print("Unhandled interrupt!\n");
+    outb(PIC1_COMMAND, PIC_EOI);
 }
 void load_idt()
 {

@@ -1,3 +1,4 @@
+#include "std.h"
 #include "gdt.h"
 
 static gdt_entry_bits gdt[6];
@@ -11,37 +12,37 @@ uint32_t get_esp() {
 }
 void flush_tss() {
     __asm__ volatile (
-        "mov ax, %0\n"
-        "ltr ax\n"
+        "ltr %w0"  // Load Task Register with the 16-bit selector
         :
-        : "r" ((5 * 8) | 0)  // Fifth GDT entry, RPL = 0
-        : "ax"
+        : "r" ((uint16_t)((5 * 8) | 0))  // Ensure a 16-bit operand
+        : "memory"
     );
 }
-#include <stdint.h>
+
 
 void jump_usermode(void (*user_function)()) {
     __asm__ volatile (
-        "mov ax, %0\n"
-        "mov ds, ax\n"
-        "mov es, ax\n"
-        "mov fs, ax\n"
-        "mov gs, ax\n"
-
+        "mov %w0, %%ax\n"   // Move Ring 3 data selector into AX
+        "mov %%ax, %%ds\n"
+        "mov %%ax, %%es\n"
+        "mov %%ax, %%fs\n"
+        "mov %%ax, %%gs\n"
+    
         // Set up the stack frame for IRET
-        "mov eax, esp\n"
-        "push %0\n"  // Push ring 3 data segment selector (SS)
-        "push eax\n"  // Push current ESP
-        "pushf\n"     // Push EFLAGS
-        "push %1\n"  // Push ring 3 code segment selector (CS)
-        "push %2\n"  // Push user function address
+        "mov %%esp, %%eax\n" // Save ESP in EAX
+        "push %w0\n"         // Push Ring 3 data segment selector (SS)
+        "push %%eax\n"       // Push current ESP
+        "pushf\n"            // Push EFLAGS
+        "push %w1\n"         // Push Ring 3 code segment selector (CS)
+        "push %2\n"          // Push user function address
         "iret\n"
         :
-        : "r" ((4 * 8) | 3),  // Ring 3 data selector
-          "r" ((3 * 8) | 3),  // Ring 3 code selector
-          "r" (user_function) // Function pointer to jump to
+        : "rm" ((uint16_t)((4 * 8) | 3)),  // Ring 3 data selector
+          "rm" ((uint16_t)((3 * 8) | 3)),  // Ring 3 code selector
+          "r" (user_function)             // Function pointer to jump to
         : "ax", "eax"
     );
+    
 }
 
 void setup_gdt()
@@ -92,7 +93,7 @@ void setup_gdt()
     ring3_code->base_low = 0;
     ring3_code->accessed = 0;
     ring3_code->read_write = 1; // since this is a code segment, specifies that the segment is readable
-    ring3_code->conforming _expand_down = 0; // does not matter for ring 3 as no lower privilege level exists
+    ring3_code->conforming_expand_down = 0; // does not matter for ring 3 as no lower privilege level exists
     ring3_code->code = 1;
     ring3_code->code_data_segment = 1;
     ring3_code->DPL = 3; // ring 3

@@ -1,6 +1,7 @@
 #ifndef GDT_H
 #define GDT_H
-struct gdt_entry_bits {
+
+typedef struct {
 	unsigned int limit_low              : 16;
 	unsigned int base_low               : 24;
 	unsigned int accessed               :  1;
@@ -16,7 +17,9 @@ struct gdt_entry_bits {
 	unsigned int big                    :  1; // 32-bit opcodes for code, uint32_t stack for data
 	unsigned int gran                   :  1; // 1 to use 4k page addressing, 0 for byte addressing
 	unsigned int base_high              :  8;
-} __attribute__((packed))
+} __attribute__((packed)) gdt_entry_bits;
+
+;
 
 struct tss_entry_struct {
 	uint32_t prev_tss; // The previous TSS - with hardware task switching these form a kind of backward linked list.
@@ -47,7 +50,7 @@ struct tss_entry_struct {
 	uint32_t ldt;
 	uint16_t trap;
 	uint16_t iomap_base;
-}  __attribute__((packed))
+}  __attribute__((packed));
 
 typedef struct tss_entry_struct tss_entry_t;
 typedef struct {

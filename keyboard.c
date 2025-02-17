@@ -118,7 +118,7 @@ void enable_keyboard_interrupt()
     outb(PIC1_DATA, 0x01); // ICW4: 8086 mode
     outb(PIC2_DATA, 0x01);
 
-    outb(PIC1_DATA, 0xFD); // OCW1: Unmask IRQ1 (keyboard), mask all others
+    outb(PIC1_DATA, 0xFC); // OCW1: Unmask IRQ1 (keyboard), mask all others
     outb(PIC2_DATA, 0xFF); // OCW1: Mask all IRQs on slave
     buffer_index = 0;
 }
