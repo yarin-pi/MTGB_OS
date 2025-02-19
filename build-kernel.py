@@ -20,6 +20,12 @@ def build(file_a, file_b):
         kernel = f_b.read(len(content_a))
         rest = f_b.read()
 
+    t = len(content_a) - len(content_b)
+    if t > 0:
+        rest = b'\x00' * (t) + rest
+    elif t < 0:
+        rest = rest[-t:]
+
     # Combine the parts
     new_content = first_512_bytes + content_b + rest
     

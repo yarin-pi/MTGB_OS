@@ -38,7 +38,7 @@ typedef struct
 } page_directory_entry_t;
 
 #define HEAP_ADDR 0xc0400000
-#define HEAP_SIZE 0xc0600000 - 0xc0400000
+#define HEAP_SIZE 0xf0000000 - 0xc0400000
 void *setup_identity_mapping();
 void map_page(void *physaddr, void *virtualaddr, unsigned int flags, page_table_entry_t *page_table);
 void unmap_page(void *virtual_address, page_table_entry_t *page_table);
@@ -48,6 +48,7 @@ void *kalloc(uint32_t size);
 void kfree(void *addr, uint32_t size);
 uint32_t *virt_to_phys(void *virtual);
 void init_kalloc();
+void enb_4mb();
 extern Buddy bud;
 extern page_table_entry_t page_table[1024];
 extern page_table_entry_t page_table2[1024];
