@@ -6,7 +6,9 @@ volatile uint32_t pit_ticks = 0;
 void pit_set_frequency(uint32_t frequency)
 {
     pit_ticks = 0x0;
-    uint16_t divisor = (uint16_t)(PIT_FREQUENCY / frequency);
+    uint16_t divisor = (uint16_t)(PIT_FREQUENCY / (frequency ? frequency : 1));
+    if (divisor == 0)
+        divisor = 1;                                 // Ensure valid divisor
     outb(PIT_COMMAND_PORT, 0x36);                    // Send command byte (8-bit)
     outb(PIT_CHANNEL_0_DATA, divisor & 0xFF);        // Send low byte
     outb(PIT_CHANNEL_0_DATA, (divisor >> 8) & 0xFF); // Send high byte
