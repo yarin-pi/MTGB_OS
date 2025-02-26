@@ -1,4 +1,7 @@
 #include "vm.h"
+#define PAGE_PRESENT  0x1
+#define PAGE_RW       0x2
+#define PAGE_4MB      0x80 
 
 page_table_entry_t page_table[1024] __attribute__((aligned(0x1000)));
 page_table_entry_t page_table2[1024] __attribute__((aligned(0x1000)));
@@ -47,21 +50,21 @@ void *setup_identity_mapping()
     page_directory[1].user = 0;
     page_directory[1].table_addr = ((uint32_t)page_table3) >> 12;
 
-    for (int i = 0; i < 1024; i++)
-    {
-        page_table4[i].present = 1;
-        page_table4[i].rw = 1;
-        page_table4[i].user = 0;
-        page_table4[i].frame_addr = (i + (0x800000 / 0x1000));
-    }
-
-    page_directory[769].present = 1;
-    page_directory[769].rw = 1;
-    page_directory[769].user = 0;
-    page_directory[769].table_addr = ((uint32_t)page_table4) >> 12;
     return (void *)page_directory;
 }
-
+void enb_4mb()
+{
+    uint32_t base_addr = 0x00800000;  // Start from 8MB
+    for (int i = 0; i < 199; i++)  // 199 * 4MB = 796MB
+    {
+        page_directory[769 + i].present = 1;
+        page_directory[769 + i].rw = 1;
+        page_directory[769 + i].user = 0;
+        page_directory[769 + i].page_size = 1;  // Set PS bit for 4MB pages
+        page_directory[769 + i].table_addr = (base_addr >> 12); // Correct shift
+        base_addr += 0x400000;  // Move to next 4MB region
+    }
+}
 void map_page(void *physaddr, void *virtualaddr, unsigned int flags, page_table_entry_t *page_table)
 {
     unsigned long pdindex = (unsigned long)virtualaddr >> 22;
@@ -111,6 +114,11 @@ uint32_t *virt_to_phys(void *virtual)
     int pdi_index = (unsigned long)virtual >> 22;
     int pti_index = (unsigned long)virtual >> 12 & 0x3ff;
     int offset = (unsigned long)virtual & 0xfff;
+    if(page_directory[pdi_index].page_size)
+    {
+        offset = (unsigned int)virtual & 0x3fffff;
+        return (page_directory[pdi_index].table_addr << 12 ) | offset;
+    }
     page_table_entry_t *ent = page_directory[pdi_index].table_addr << 12;
     ent = HIGHER_HALF(ent);
     return ((ent[pti_index].frame_addr << 12) | offset);

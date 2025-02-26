@@ -11,7 +11,7 @@ global main
     dq 0x9090909090909090
     dw 512
     db 1
-    dw 0x40
+    dw 0x80
     db 1
     dw 512
     dw 0
@@ -31,7 +31,7 @@ main:
         mov ch, 0
         mov cl, 2
         mov ah, 0x02
-        mov al, 0x40
+        mov al, 0x50
         xor bx, bx
         mov di, 0xffff
         mov es, di

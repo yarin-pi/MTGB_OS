@@ -12,17 +12,28 @@ int _start()
     void *page_directory = setup_identity_mapping();
 
     asm volatile("mov %0, %%cr3" ::"r"(page_directory));
+    asm volatile (
+        "mov %%cr4, %%eax\n"
+        "or $0x10, %%eax\n"   // Set PSE (bit 4) to enable 4MB pages
+        "mov %%eax, %%cr4\n"
+        ::: "eax", "cc"
+    );
+    
     uint32_t cr0;
     asm volatile("mov %%cr0, %0" : "=r"(cr0));
 
     cr0 |= 0x80000000;
 
     asm volatile("mov %0, %%cr0" ::"r"(cr0));
-
+    
+    enb_4mb();
     MoveHigherHalf();
+    
     map_page(0xB8000, 0xC0150000, 0, page_table2);
     init_idt();
     load_idt();
+    
+    
 
     uint32_t *ahci_add = find_ahci_controller();
     if (!ahci_add)
@@ -58,12 +69,13 @@ int _start()
     
     asm volatile("sti");
     FatInitImage(port);
+    init_kalloc();
     char *arrxe = (char *)kalloc(1400);
-    getContent("/del.txt", (void *)arrxe);
+    getContent("/simple_program.elf", (void *)arrxe);
     clear_screen();
     enable_keyboard_interrupt();
     clock_init();
-    init_kalloc();
+    
     uint32_t *ptr = kalloc(0x1000);
     print_int(ptr, 16);
 
@@ -78,7 +90,7 @@ void MoveHigherHalf()
         "pop %%eax\n"
         "pop %%eax\n"
         "add $0xc0000000, %%eax\n"
-        "add $0xc0700000, %%esp\n"
+        "add $0xe0000000, %%esp\n"
         "jmp *%%eax"
         :
         :
