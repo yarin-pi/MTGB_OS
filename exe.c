@@ -1,8 +1,5 @@
 #include "exe.h"
-#include "std.h"
-#include "print.h"
-#include "process.h"
-#include "vm.h"
+
 
 #define NULL 0
 uint32_t validate_elf(ELFHeader *header)
@@ -54,20 +51,30 @@ uint32_t validate_elf(ELFHeader *header)
         print("Unsupported ELF version.\n");
         return FALSE;
     }
-
     return TRUE;
 }
 
-void parse_program_headers(ELFHeader *hdr)
+page_directory_entry_t* parse_program_headers(ELFHeader *hdr)
 {
     if (hdr->e_phoff == 0 || hdr->e_phnum == 0)
     {
         print("No program headers found.\n");
         return;
     }
-
-    print("Parsing program headers:\n");
+    init_palloc();
+    page_directory_entry_t* n_pd = create_page_directory();
+    switch_page_directory(virt_to_phys(n_pd)); 
     ProgramHeader *ph = (ProgramHeader *)((char *)hdr + hdr->e_phoff);
+
+    for (int i = 0; i < hdr->e_phnum;i++)
+    {
+        if(ph[i].p_type == PT_LOAD)
+        {
+            palloc(&ph[i],(void*)hdr,n_pd);
+            
+        }
+    }
+    return n_pd;
 }
 void *elf_load_rel(ELFHeader *hdr)
 {
@@ -105,8 +112,8 @@ void *elf_load_file(void *file)
             print("Invalid entry point.\n");
             return NULL;
         }
-        parse_program_headers(hdr);
-        return (void *)hdr->e_entry;
+        page_directory_entry_t* sf = parse_program_headers(hdr);
+        jump_usermode(hdr->e_entry,virt_to_phys(sf));
     case ET_REL:
         return elf_load_rel(hdr);
     }

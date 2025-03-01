@@ -6,6 +6,7 @@
 #include "vm.h"
 #include "keyboard.h"
 #include "clock.h"
+#include "exe.h"
 
 int _start()
 {
@@ -67,14 +68,17 @@ int _start()
         0x8E                                     // Type attribute: present, privilege 0, 32-bit interrupt gate
     );
     
+    setup_gdt();
     asm volatile("sti");
     FatInitImage(port);
     init_kalloc();
-    char *arrxe = (char *)kalloc(1400);
-    getContent("/simple_program.elf", (void *)arrxe);
+    char *arrxe = (char *)kalloc(0x24a8);
+    getContent("/simple.elf", (void *)arrxe);
     clear_screen();
     enable_keyboard_interrupt();
     clock_init();
+    elf_load_file(arrxe);
+    
     
     uint32_t *ptr = kalloc(0x1000);
     print_int(ptr, 16);
@@ -90,7 +94,7 @@ void MoveHigherHalf()
         "pop %%eax\n"
         "pop %%eax\n"
         "add $0xc0000000, %%eax\n"
-        "add $0xe0000000, %%esp\n"
+        "add $0xf0000000, %%esp\n"
         "jmp *%%eax"
         :
         :

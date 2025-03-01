@@ -1,5 +1,9 @@
 #ifndef EXE_H
 #define EXE_H
+#include "std.h"
+#include "print.h"
+#include "vm.h"
+#include "gdt.h"
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
@@ -123,6 +127,7 @@ enum StT_Types
 
 #define ELFDATA2LSB (1) // Little Endian
 #define ELFCLASS32 (1)  // 32-bit Architecture
+#define PT_LOAD 1
 
 // ELF Header structure
 typedef struct elf_header
@@ -144,17 +149,7 @@ typedef struct elf_header
 } ELFHeader;
 
 // Program Header structure (used to describe memory layout)
-typedef struct
-{
-    uint32_t p_type;
-    uint32_t p_offset;
-    uint32_t p_vaddr;
-    uint32_t p_paddr;
-    uint32_t p_filesz;
-    uint32_t p_memsz;
-    uint32_t p_flags;
-    uint32_t p_align;
-} ProgramHeader;
+
 
 // Function declarations
 uint32_t validate_elf(ELFHeader *header);
@@ -163,8 +158,9 @@ SectionHeader *elf_section(ELFHeader *hdr, int idx);
 uint32_t elf_load_stage1(ELFHeader *hdr);
 uint32_t elf_load_stage2(ELFHeader *hdr);
 
-    void *elf_load_file(void *file);
-void parse_program_headers(ELFHeader *hdr);
+
+page_directory_entry_t* parse_program_headers(ELFHeader *hdr);
+void *elf_load_file(void *file);
 void *elf_load_rel(ELFHeader *hdr);
 uint32_t elf_do_reloc(ELFHeader *hdr, Elf32_Rel *rel, SectionHeader *reltab);
 void *elf_lookup_symbol(const char *name, ELFHeader *hdr);

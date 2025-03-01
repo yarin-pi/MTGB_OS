@@ -1,13 +1,13 @@
 #include "pm.h"
 #define POOL_S 1966080 / 8
-static uint8_t bitm_pool[POOL_S];
+static uint8_t bitm_pool[2][POOL_S]; // Two bitmaps
 
-void init_buddy(Buddy *buddy)
+void init_buddy(Buddy *buddy, uint8_t index)
 {
     int offset = 0;
     for (int i = 0; i <= buddy->max_order; i++)
     {
-        buddy->bitmap[i] = bitm_pool + offset;
+        buddy->bitmap[i] = bitm_pool[index] + offset;
         for (int j = 0; j < buddy->total_size / ((1 << i) * 4096); j++)
         {
             if (i == buddy->max_order)
@@ -23,7 +23,6 @@ void init_buddy(Buddy *buddy)
     }
 }
 
-
 uint16_t get_level(uint32_t alloc_size)
 {
     uint16_t level = 0;
@@ -36,7 +35,7 @@ uint16_t get_level(uint32_t alloc_size)
     return level;
 }
 
-uint32_t split_block(Buddy *buddy, uint16_t level, uint32_t index, uint16_t depth)
+uint32_t split_block(Buddy *buddy, uint16_t level, uint32_t index, uint16_t depth, uint8_t bitmap_index)
 {
     uint8_t *map = buddy->bitmap[level];
     map[index / 8] |= 1 << (index % 8);
@@ -48,9 +47,10 @@ uint32_t split_block(Buddy *buddy, uint16_t level, uint32_t index, uint16_t dept
     map = buddy->bitmap[level - 1];
     map[(index * 2) / 8] |= (1 << (index * 2 % 8));
     map[(index * 2) / 8] &= ~(1 << ((index * 2 + 1) % 8));
-    split_block(buddy, level - 1, index * 2, depth - 1);
+    return split_block(buddy, level - 1, index * 2, depth - 1, bitmap_index);
 }
-void merge_block(Buddy *buddy, uint16_t level, uint32_t index)
+
+void merge_block(Buddy *buddy, uint16_t level, uint32_t index, uint8_t bitmap_index)
 {
     uint8_t *map = buddy->bitmap[level];
     if ((((map[index / 8] >> (index % 8)) & 1) || ((map[index / 8] >> ((index + 1) % 8)) & 1)) || level > 3)
@@ -59,9 +59,10 @@ void merge_block(Buddy *buddy, uint16_t level, uint32_t index)
     }
     map[index / 8] |= 1 << (index % 8);
     map[index / 8] |= 1 << ((index + 1) % 8);
-    merge_block(buddy, level + 1, index / 2);
+    merge_block(buddy, level + 1, index / 2, bitmap_index);
 }
-void *balloc(Buddy *buddy, uint32_t alloc_size)
+
+void *balloc(Buddy *buddy, uint32_t alloc_size, uint8_t bitmap_index)
 {
     uint16_t offset = 0;
     uint16_t block_lv = 0;
@@ -74,7 +75,6 @@ void *balloc(Buddy *buddy, uint32_t alloc_size)
         {
             if (map[j / 8] != 0xff)
             {
-
                 uint8_t is_free = (map[j / 8] >> (j % 8)) & 1;
                 if (!is_free)
                 {
@@ -88,8 +88,7 @@ void *balloc(Buddy *buddy, uint32_t alloc_size)
     }
     if (found)
     {
-
-        uint32_t address = (uint32_t)buddy->base_address + (1 << ((uint32_t)level + 12)) * split_block(buddy, block_lv, offset, block_lv - level);
+        uint32_t address = (uint32_t)buddy->base_address + (1 << ((uint32_t)level + 12)) * split_block(buddy, block_lv, offset, block_lv - level, bitmap_index);
         return (void *)address;
     }
     else
@@ -97,10 +96,11 @@ void *balloc(Buddy *buddy, uint32_t alloc_size)
         return 0;
     }
 }
-void bfree(Buddy *buddy, void *ptr, uint16_t order)
+
+void bfree(Buddy *buddy, void *ptr, uint16_t order, uint8_t bitmap_index)
 {
     uint32_t byte_offset = (uint32_t)ptr - (uint32_t)buddy->base_address;
     uint32_t index = byte_offset / (1 << (order + 12));
     buddy->bitmap[order][index / 8] &= ~(1 << (index % 8));
-    merge_block(buddy, order, index);
+    merge_block(buddy, order, index, bitmap_index);
 }

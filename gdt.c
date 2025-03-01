@@ -20,29 +20,36 @@ void flush_tss() {
 }
 
 
-void jump_usermode(void (*user_function)()) {
+void jump_usermode(void *user_function, page_directory_entry_t* pd) {
+    uint32_t user_stack = 0xB0000000; // Example user-mode stack
+
     __asm__ volatile (
-        "mov %w0, %%ax\n"   // Move Ring 3 data selector into AX
-        "mov %%ax, %%ds\n"
-        "mov %%ax, %%es\n"
-        "mov %%ax, %%fs\n"
-        "mov %%ax, %%gs\n"
-    
-        // Set up the stack frame for IRET
-        "mov %%esp, %%eax\n" // Save ESP in EAX
-        "push %w0\n"         // Push Ring 3 data segment selector (SS)
-        "push %%eax\n"       // Push current ESP
-        "pushf\n"            // Push EFLAGS
-        "push %w1\n"         // Push Ring 3 code segment selector (CS)
-        "push %2\n"          // Push user function address
-        "iret\n"
+        "mov %0, %%cr3\n"           // Load page directory (must be before segment change)
+        
+        "mov %1, %%ax\n"            // Move Ring 3 data selector into AX
+        "mov %%ax, %%ds\n"          // Set DS register to the data segment selector
+        "mov %%ax, %%es\n"          // Set ES register
+        "mov %%ax, %%fs\n"          // Set FS register
+        "mov %%ax, %%gs\n"          // Set GS register
+
+        "push %4\n"                 // Push Ring 3 SS
+        "push %5\n"                 // Push Ring 3 ESP
+        "pushf\n"                   // Push EFLAGS
+        "pop %%eax\n"
+        "or $0x200, %%eax\n"        // Set Interrupt Flag (IF)
+        "push %%eax\n"
+        "push %2\n"                 // Push Ring 3 CS
+        "push %3\n"                 // Push user function address (entry point)
+        "iret\n"                    // Perform the far jump to user function
         :
-        : "rm" ((uint16_t)((4 * 8) | 3)),  // Ring 3 data selector
-          "rm" ((uint16_t)((3 * 8) | 3)),  // Ring 3 code selector
-          "r" (user_function)             // Function pointer to jump to
+        : "r" (pd),                      // Page directory (address of PD)
+          "rm" ((uint16_t)((4 * 8) | 3)),// Ring 3 data segment selector
+          "rm" ((uint16_t)((3 * 8) | 3)),// Ring 3 code segment selector
+          "r" (user_function),           // User-mode function
+          "r" ((uint32_t)((4 * 8) | 3)), // Ring 3 SS
+          "r" (user_stack)               // Ring 3 ESP
         : "ax", "eax"
     );
-    
 }
 
 void setup_gdt()

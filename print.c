@@ -75,8 +75,8 @@ void print_char(char c)
 }
 void print(const char *str)
 {
-    int i;
-    for (i = 0; str[i] != '\0'; i++)
+    
+    for (int i = 0; str[i] != '\0'; i++)
     {
         print_char(str[i]);
     }

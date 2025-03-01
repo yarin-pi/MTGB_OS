@@ -1,6 +1,6 @@
 #ifndef GDT_H
 #define GDT_H
-
+#include "vm.h"
 typedef struct {
 	unsigned int limit_low              : 16;
 	unsigned int base_low               : 24;
@@ -57,7 +57,7 @@ typedef struct {
 	uint16_t size;
 	uint32_t base;
 } __attribute__((packed)) gdt_ptr;
-
+void jump_usermode(void *user_function, page_directory_entry_t* pd);
 void setup_gdt();
 void write_tss(gdt_entry_bits* g);
 #endif GDT_H
