@@ -2,7 +2,7 @@
 #include "print.h"
 #include "fs.h"
 #include "print.h"
-__attribute__((interrupt, target("general-regs-only"))) void handle_syscall(struct interrupt_frame *frame)
+__attribute__((interrupt, target("general-regs-only")))  void handle_syscall(struct interrupt_frame *frame)
 {
     switch (get_eax_value())
     {
