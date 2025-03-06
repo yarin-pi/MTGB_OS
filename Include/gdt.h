@@ -57,7 +57,9 @@ typedef struct {
 	uint16_t size;
 	uint32_t base;
 } __attribute__((packed)) gdt_ptr;
-void jump_usermode(void *user_function, page_directory_entry_t* pd);
+uint32_t get_esp();
+void set_kernel_stack(uint32_t stack);
+void jump_usermode(void *user_function, page_directory_entry_t* pd,uint32_t user_stack);
 void setup_gdt();
 void write_tss(gdt_entry_bits* g);
 #endif GDT_H

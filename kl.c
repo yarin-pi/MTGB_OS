@@ -7,6 +7,7 @@
 #include "keyboard.h"
 #include "clock.h"
 #include "exe.h"
+#include "syscall.h"
 
 int _start()
 {
@@ -67,6 +68,7 @@ int _start()
         0x08,                                    // Code segment selector
         0x8E                                     // Type attribute: present, privilege 0, 32-bit interrupt gate
     );
+    set_idt_entry(0x80,(uint32_t)HIGHER_HALF(handle_syscall),0x08,0xEE);
     
     setup_gdt();
     asm volatile("sti");

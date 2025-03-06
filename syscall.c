@@ -2,50 +2,55 @@
 #include "print.h"
 #include "fs.h"
 #include "print.h"
-__attribute__((interrupt, target("general-regs-only")))  void handle_syscall(struct interrupt_frame *frame)
+#include "exe.h"
+
+__attribute__((interrupt, target("general-regs-only"))) void handle_syscall(struct interrupt_frame *frame)
 {
-    switch (get_eax_value())
+    uint32_t edi = get_edi_value();
+    uint32_t esi = get_esi_value();
+    uint32_t ecx = get_ecx_value();
+    set_kernel_stack(k_stack);
+    switch (edi)
     {
     case SYS_READ:
-        char *path = get_ebx_value();
-
-        getContent(path, get_ecx_value());
+        char *path = (char*)esi;
+        getContent(path, ecx);
         break;
     case SYS_WRITE:
-        void *ecx_val = get_ecx_value();
-        FatAddFile(get_ebx_value(), ecx_val, strlen((char *)ecx_val));
+        void *ecx_val = ecx;
+        FatAddFile(esi, ecx_val, strlen((char *)ecx_val));
         break;
     case SYS_PRINT:
-        char *text = get_ebx_value();
+        char *text = esi;
         print(text);
         break;
     default:
         print("unknown syscall number: ");
-        print_int(get_eax_value(), 10);
+        print_int(edi, 10);
         break;
     }
 }
-uint32_t get_eax_value()
+uint32_t get_edi_value()
 {
-    int eax_value;
+    uint32_t edi_value;
     __asm__ volatile(
-        "movl %%eax, %0"
-        : "=r"(eax_value) // Output operand: store EAX into eax_value
+        "movl %%edi, %0"
+        : "=r"(edi_value) // Output operand: store EAX into eax_value
         :
-        : "eax" // Clobber list: tell compiler that EAX is used
+        : "edi" // Clobber list: tell compiler that EAX is used
     );
-    return eax_value;
+    return edi_value;
 }
-char *get_ebx_value()
+char *get_esi_value()
 {
-    char *ebx_value;
+    char *esi_value;
     __asm__ volatile(
-        "movl %%ebx, %0"
-        : "=r"(ebx_value) // Store EBX into ebx_value
+        "movl %%esi, %0"
+        : "=r"(esi_value) // Store EBX into ebx_value
         :
-        : "ebx" // Tell compiler EBX is used
+        : "esi" // Tell compiler EBX is used
     );
-    return ebx_value;
+    return esi_value;
 }
 void *get_ecx_value()
 {

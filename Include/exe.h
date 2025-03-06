@@ -14,7 +14,7 @@ typedef unsigned long long uint64_t;
 #define ELF32_R_TYPE(INFO) ((uint8_t)(INFO))
 #define DO_386_32(S, A) ((S) + (A))
 #define DO_386_PC32(S, A, P) ((S) + (A) - (P))
-
+extern uint32_t k_stack;
 enum RtT_Types
 {
     R_386_NONE = 0, // No relocation
