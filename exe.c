@@ -95,7 +95,8 @@ void *elf_load_rel(ELFHeader *hdr)
     parse_program_headers(hdr);
     return (void *)hdr->e_entry;
 }
-
+uint32_t k_stack;
+uint32_t current = 0xf0000000 - 0x400000 - 0xf;
 void *elf_load_file(void *file)
 {
     ELFHeader *hdr = (ELFHeader *)file;
@@ -112,8 +113,23 @@ void *elf_load_file(void *file)
             print("Invalid entry point.\n");
             return NULL;
         }
+        uint32_t esp = current;
+        uint32_t heap = 0x08048000;
+        k_stack = get_esp();
         page_directory_entry_t* sf = parse_program_headers(hdr);
-        jump_usermode(hdr->e_entry,virt_to_phys(sf));
+        unsigned long Hpdindex = heap >> 22;
+        sf[Hpdindex].page_size = 1;
+        sf[Hpdindex].present = 1;
+        sf[Hpdindex].rw = 1;
+        sf[Hpdindex].user = 1;
+        sf[Hpdindex].table_addr = (uint32_t)balloc(&pbud,0x1000,1) >> 12;
+        unsigned long Spdindex = (esp >> 22);
+        sf[Spdindex].page_size = 1;
+        sf[Spdindex].present = 1;
+        sf[Spdindex].rw = 1;
+        sf[Spdindex].user = 1;
+        current -= 0x400000;
+        jump_usermode(hdr->e_entry,virt_to_phys(sf),esp);
     case ET_REL:
         return elf_load_rel(hdr);
     }

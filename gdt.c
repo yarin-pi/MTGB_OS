@@ -20,10 +20,11 @@ void flush_tss() {
 }
 
 
-void jump_usermode(void *user_function, page_directory_entry_t* pd) {
-    uint32_t user_stack = 0xB0000000; // Example user-mode stack
+void jump_usermode(void *user_function, page_directory_entry_t* pd, uint32_t user_stack) { // Example user-mode stack
+    
 
     __asm__ volatile (
+        "cli\n"
         "mov %0, %%cr3\n"           // Load page directory (must be before segment change)
         
         "mov %1, %%ax\n"            // Move Ring 3 data selector into AX

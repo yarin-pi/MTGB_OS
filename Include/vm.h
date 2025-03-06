@@ -68,6 +68,7 @@ void palloc(ProgramHeader* ph, void* f_addr, page_directory_entry_t* pd);
 page_directory_entry_t* create_page_directory();
 void switch_page_directory(uint32_t* new_pd);
 extern Buddy bud;
+extern Buddy pbud;
 extern page_table_entry_t page_table[1024];
 extern page_table_entry_t page_table2[1024];
 extern page_table_entry_t page_table3[1024];

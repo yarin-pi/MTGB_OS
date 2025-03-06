@@ -244,9 +244,9 @@ void palloc(ProgramHeader* ph, void* f_addr, page_directory_entry_t* pd) {
         Page = (page_table_entry_t*)kalloc(4096);
         tmp = Page;
         memset(Page, 0, 4096); // Clear new page table
-        pd[pdindex].rw = (ph->p_flags & PF_W) ? PAGE_RW : 0;  
+        pd[pdindex].rw = (ph->p_flags & PF_W) ? 1 : 0;  
         pd[pdindex].present = 1;
-        pd[pdindex].user = (ph->p_flags & PF_W) ? PAGE_USER : 0;
+        pd[pdindex].user = 1;
         pd[pdindex].table_addr = (uint32_t)virt_to_phys(Page) >> 12;
     } else {
         Page = tmp;
@@ -257,8 +257,8 @@ void palloc(ProgramHeader* ph, void* f_addr, page_directory_entry_t* pd) {
         uint32_t inx = i / 4096;
         uint32_t n_ptIn = ptindex + inx;
 
-        Page[n_ptIn].rw = (ph->p_flags & PF_W) ? PAGE_RW : 0;  
-        Page[n_ptIn].user = (ph->p_flags & PF_W) ? PAGE_USER : 0;
+        Page[n_ptIn].rw = (ph->p_flags & PF_W) ? 1 : 0;  
+        Page[n_ptIn].user = 1;
         Page[n_ptIn].present = 1;
         Page[n_ptIn].frame_addr = (uint32_t)balloc(&pbud, 4096, 1) >> 12;
 

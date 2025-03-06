@@ -6,8 +6,8 @@
 
 #include "std.h"
 void handle_syscall(struct interrupt_frame *frame);
-char *get_ebx_value();
-uint32_t get_eax_value();
+char *get_esi_value();
+uint32_t get_edi_value();
 void *get_ecx_value();
 
 #endif
