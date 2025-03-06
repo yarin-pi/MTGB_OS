@@ -27,7 +27,6 @@ global main
     dd 0xa0a1a2a3
     
 main:
-          # graphics vesa start here
         mov [.width], ax
         mov [.height], bx
         mov [.bpp], cl
@@ -123,7 +122,6 @@ main:
         clc
         ret
 
-        # ends here
         mov dh, 0
         mov ch, 0
         mov cl, 2
@@ -226,7 +224,7 @@ gdt_pointer:
     dw gdt_end - gdt_start - 1  
     dd gdt_start    
     dw 0 
- # graphics   
+ ; graphics   
 .next_mode:
 	mov ax, [.segment]
 	mov fs, ax
@@ -244,7 +242,7 @@ gdt_pointer:
 .offset				dw 0
 .mode				dw 0
 
-# ends
+; ends
 .partition_table:
     ; First partition entry (16 bytes)
     times 446 - ($-$$) db 0
