@@ -27,16 +27,7 @@ global main
     dd 0xa0a1a2a3
     
 main:
-        mov dh, 0
-        mov ch, 0
-        mov cl, 2
-        mov ah, 0x02
-        mov al, 0x50
-        xor bx, bx
-        mov di, 0xffff
-        mov es, di
-        mov bx, 0x0010
-        # graphics vesa start here
+          # graphics vesa start here
         mov [.width], ax
         mov [.height], bx
         mov [.bpp], cl
@@ -133,6 +124,15 @@ main:
         ret
 
         # ends here
+        mov dh, 0
+        mov ch, 0
+        mov cl, 2
+        mov ah, 0x02
+        mov al, 0x50
+        xor bx, bx
+        mov di, 0xffff
+        mov es, di
+        mov bx, 0x0010
         int 0x13
         jmp check_a20
 after_a20_valid:
