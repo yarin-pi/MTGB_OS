@@ -4,17 +4,19 @@
 #define MAX_THREADS 32
 struct kthread
 {
+    void *arg;
     state s;
     uint32_t *stack;
     uint32_t tid;
     uint32_t parent_pid;
     uint32_t timeSlice;
     struct kthread *next;
-    void *arg;
+    
 };
 
 struct kprocess
 {
+    void *arg;
     state s;
     uint32_t pid;
     uint32_t num_threads;
@@ -23,9 +25,10 @@ struct kprocess
     struct kthread *threads[MAX_THREADS];
     struct kprocess *parent;
     struct kprocess *children; // Pointer to child processes
-    void *arg;
+    
 };
-
+extern void switch_to_task(struct kthread* tcb);
+extern struct kthread* current_task_TCB;
 // Scheduler functions
 void scheduler_init(void);
 void scheduler_next(void);

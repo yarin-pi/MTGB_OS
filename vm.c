@@ -227,8 +227,8 @@ void kfree(void *addr, uint32_t size)
 
 void init_palloc()
 {
-    pbud.base_address = 0x40000000;
-    pbud.total_size = 0xc0000000 - 0x40000000;
+    pbud.base_address = 0x60000000;
+    pbud.total_size = 0xc0000000 - 0x60000000;
     pbud.max_order = 3;
     init_buddy(&pbud,1);
 }

@@ -69,7 +69,7 @@ int _start()
         0x8E                                     // Type attribute: present, privilege 0, 32-bit interrupt gate
     );
     set_idt_entry(0x80,(uint32_t)HIGHER_HALF(handle_syscall),0x08,0xEE);
-    
+    set_idt_entry(0x7f,(uint32_t)HIGHER_HALF(switch_to_kernel),0x08,0xee);
     setup_gdt();
     asm volatile("sti");
     FatInitImage(port);

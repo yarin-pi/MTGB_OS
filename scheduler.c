@@ -1,9 +1,9 @@
 #include "scheduler.h"
 #include "vm.h"
-static struct kprocess *run_queue = 0;
-static struct kprocess *wait_queue = 0;
-static struct kthread *cur_thread = 0;
-static struct kprocess *cur_process = 0;
+struct kprocess *run_queue = 0;
+struct kprocess *wait_queue = 0;
+struct kthread* current_task_TCB = 0;
+struct kprocess *cur_process = 0;
 
 static uint32_t next_pid = 1;
 static uint32_t next_tid = 1;
@@ -13,10 +13,10 @@ static int scheduler_enabled = 0;
 void scheduler_init(void)
 {
     cur_process = init_task();
-    cur_thread = create_thread(cur_process, 0);
-    cur_thread->stack = 0;
-    switch_thread(cur_thread, cur_thread);
-    cur_thread->s = RUNNING;
+    current_task_TCB = create_thread(cur_process, 0);
+    current_task_TCB->stack = 0;
+    switch_thread(current_task_TCB, current_task_TCB);
+    current_task_TCB->s = RUNNING;
     scheduler_enabled = 1;
 }
 
@@ -28,19 +28,19 @@ void scheduler_next(void)
     if (run_queue == 0)
         return;
 
-    struct kthread *thread = cur_thread;
+    struct kthread *thread = current_task_TCB;
     struct kprocess *proc = cur_process;
 
     update_time_slice();
 
-    if (cur_thread->timeSlice == 0)
+    if (current_task_TCB->timeSlice == 0)
     {
-        schedule_thread(cur_thread);
-        cur_thread = run_queue;
+        schedule_thread(current_task_TCB);
+        current_task_TCB = run_queue;
         run_queue = run_queue->next;
-        cur_thread->next = 0;
-        cur_thread->s = RUNNING;
-        switch_thread(thread, cur_thread);
+        current_task_TCB->next = 0;
+        current_task_TCB->s = RUNNING;
+        switch_thread(thread, current_task_TCB);
     }
 }
 
@@ -61,15 +61,15 @@ void schedule_thread(struct kthread *thread)
 
 void update_time_slice(void)
 {
-    if (cur_thread != 0)
+    if (current_task_TCB != 0)
     {
-        if (cur_thread->timeSlice > 0)
+        if (current_task_TCB->timeSlice > 0)
         {
-            cur_thread->timeSlice--;
+            current_task_TCB->timeSlice--;
         }
         else
         {
-            reset_time_slice(cur_thread);
+            reset_time_slice(current_task_TCB);
         }
     }
 
@@ -170,7 +170,7 @@ void switch_thread(struct kthread *old, struct kthread *new)
         :
         : "r"(new->stack));
 
-    cur_thread = new;
+    current_task_TCB = new;
 }
 
 struct kprocess *fork_process(struct kprocess *parent)

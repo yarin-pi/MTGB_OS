@@ -63,3 +63,12 @@ void *get_ecx_value()
     );
     return ecx_value;
 }
+void do_null()
+{
+    while(1);
+}
+__attribute__((interrupt, target("general-regs-only"))) void switch_to_kernel(struct interrupt_frame* frame)
+{
+    do_null();
+}
+

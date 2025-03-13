@@ -1,0 +1,3 @@
+Already logging to gdb.txt.
+Remote debugging using localhost:1234
+Remote target doesn't support qGetTIBAddr packet
