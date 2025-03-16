@@ -8,34 +8,31 @@
 #include "clock.h"
 #include "exe.h"
 #include "syscall.h"
-
+#include "vesa.h"
 int _start()
 {
+
     void *page_directory = setup_identity_mapping();
 
     asm volatile("mov %0, %%cr3" ::"r"(page_directory));
-    asm volatile (
+    asm volatile(
         "mov %%cr4, %%eax\n"
-        "or $0x10, %%eax\n"   // Set PSE (bit 4) to enable 4MB pages
-        "mov %%eax, %%cr4\n"
-        ::: "eax", "cc"
-    );
-    
+        "or $0x10, %%eax\n" // Set PSE (bit 4) to enable 4MB pages
+        "mov %%eax, %%cr4\n" ::: "eax", "cc");
+
     uint32_t cr0;
     asm volatile("mov %%cr0, %0" : "=r"(cr0));
 
     cr0 |= 0x80000000;
 
     asm volatile("mov %0, %%cr0" ::"r"(cr0));
-    
+
     enb_4mb();
     MoveHigherHalf();
-    
+
     map_page(0xB8000, 0xC0150000, 0, page_table2);
     init_idt();
     load_idt();
-    
-    
 
     uint32_t *ahci_add = find_ahci_controller();
     if (!ahci_add)
@@ -68,8 +65,8 @@ int _start()
         0x08,                                    // Code segment selector
         0x8E                                     // Type attribute: present, privilege 0, 32-bit interrupt gate
     );
-    set_idt_entry(0x80,(uint32_t)HIGHER_HALF(handle_syscall),0x08,0xEE);
-    
+    set_idt_entry(0x80, (uint32_t)HIGHER_HALF(handle_syscall), 0x08, 0xEE);
+
     setup_gdt();
     asm volatile("sti");
     FatInitImage(port);
@@ -79,14 +76,13 @@ int _start()
     clear_screen();
     enable_keyboard_interrupt();
     clock_init();
-    elf_load_file(arrxe);
-    
-    
-    uint32_t *ptr = kalloc(0x1000);
-    print_int(ptr, 16);
+    // elf_load_file(arrxe);
+    map_page(0xa297464, 0x10000, 0, page_table);
+    init_framebuffer();
 
     while (1)
     {
+        draw_test_pattern();
     }
     return 0;
 }
