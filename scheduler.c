@@ -1,95 +1,79 @@
 #include "scheduler.h"
 #include "vm.h"
-struct kprocess *run_queue = 0;
-struct kprocess *wait_queue = 0;
 struct kthread* current_task_TCB = 0;
-struct kprocess *cur_process = 0;
+struct kthread* first_ready = 0;
+struct kthread* last_ready = 0;
 
 static uint32_t next_pid = 1;
 static uint32_t next_tid = 1;
 
-static int scheduler_enabled = 0;
-
-void scheduler_init(void)
-{
-    cur_process = init_task();
-    current_task_TCB = create_thread(cur_process, 0);
-    current_task_TCB->stack = 0;
-    switch_thread(current_task_TCB, current_task_TCB);
-    current_task_TCB->s = RUNNING;
-    scheduler_enabled = 1;
+uint32_t IRQ_disable_counter = 0;
+uint32_t postpone_task_switches_counter = 0;
+uint32_t task_switches_postponed_flag = 0;
+void lock_scheduler(void) {
+    asm volatile("cli");
+    IRQ_disable_counter++;
 }
 
-void scheduler_next(void)
+void unlock_scheduler(void) {
+    IRQ_disable_counter--;
+    if(IRQ_disable_counter == 0) {
+        asm volatile("sti");
+    }
+}
+
+void lock_stuff(void) {
+        asm volatile("cli");
+        IRQ_disable_counter++;
+        postpone_task_switches_counter++;
+}
+void unlock_stuff(void) {
+    
+    postpone_task_switches_counter--;
+    if(postpone_task_switches_counter == 0) {
+        if(task_switches_postponed_flag != 0) {
+            task_switches_postponed_flag = 0;
+            schedule();
+        }
+    }
+    IRQ_disable_counter--;
+    if(IRQ_disable_counter == 0) {
+        asm volatile("sti");
+    }
+    
+    }
+    
+void schedule(void)
 {
-    if (scheduler_enabled == 0)
+    if(postpone_task_switches_counter != 0) {
+        task_switches_postponed_flag = 1;
         return;
-
-    if (run_queue == 0)
-        return;
-
-    struct kthread *thread = current_task_TCB;
-    struct kprocess *proc = cur_process;
-
-    update_time_slice();
-
-    if (current_task_TCB->timeSlice == 0)
-    {
-        schedule_thread(current_task_TCB);
-        current_task_TCB = run_queue;
-        run_queue = run_queue->next;
-        current_task_TCB->next = 0;
-        current_task_TCB->s = RUNNING;
-        switch_thread(thread, current_task_TCB);
+    }
+    if( first_ready != 0) {
+        struct kthread * task = first_ready;
+        first_ready = task->next;
+        switch_to_task(task);
     }
 }
+void unblock_task(struct kthread * task) {
+    lock_scheduler();
+    if(first_ready == 0) {
 
-void schedule_thread(struct kthread *thread)
-{
-    if (run_queue == 0)
-    {
-        run_queue = thread;
-        return;
+        // Only one task was running before, so pre-empt
+
+        switch_to_task(task);
+    } else {
+        // There's at least one task on the "ready to run" queue already, so don't pre-empt
+
+        last_ready->next = task;
+        last_ready = task;
     }
-
-    struct kthread *temp = run_queue;
-    while (temp->next != 0)
-        temp = temp->next;
-    temp->next = thread;
-    thread->s = READY;
+    unlock_scheduler();
 }
-
-void update_time_slice(void)
-{
-    if (current_task_TCB != 0)
-    {
-        if (current_task_TCB->timeSlice > 0)
-        {
-            current_task_TCB->timeSlice--;
-        }
-        else
-        {
-            reset_time_slice(current_task_TCB);
-        }
-    }
-
-    if (cur_process != 0)
-    {
-        if (cur_process->timeSlice > 0)
-        {
-            cur_process->timeSlice--;
-        }
-        else
-        {
-            cur_process->timeSlice = 10;
-        }
-    }
-}
-
 void reset_time_slice(struct kthread *thread)
 {
     thread->timeSlice = 5;
-    schedule_thread(thread);
+    //schedule_thread(thread);
 }
 
 struct kprocess *init_task(void)
@@ -147,7 +131,7 @@ struct kthread *create_thread(struct kprocess *proc, void *entry)
         proc->threads[proc->num_threads++] = thread;
     }
 
-    schedule_thread(thread);
+    //schedule_thread(thread);
     return thread;
 }
 

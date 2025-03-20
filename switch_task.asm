@@ -1,8 +1,16 @@
 section .text
 extern current_task_TCB
 extern tss_entry
+extern postpone_task_switches_counter
+extern task_switches_postponed_flag
 global switch_to_task
 switch_to_task:
+
+    cmp dword [postpone_task_switches_counter],0
+    je .continue
+    mov dword [task_switches_postponed_flag],1
+    ret
+.continue:
     push ebx
     push esi
     push edi

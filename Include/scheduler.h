@@ -29,6 +29,8 @@ struct kprocess
 };
 extern void switch_to_task(struct kthread* tcb);
 extern struct kthread* current_task_TCB;
+extern uint32_t postpone_task_switches_counter;
+extern uint32_t task_switches_postponed_flag;
 // Scheduler functions
 void scheduler_init(void);
 void scheduler_next(void);
