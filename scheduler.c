@@ -3,10 +3,10 @@
 struct kthread* current_task_TCB = 0;
 struct kthread* first_ready = 0;
 struct kthread* last_ready = 0;
-
 struct kthread* first_sleep = 0;
-struct kthread* last_sleep;
-
+struct kthread* last_sleep = 0;
+struct kthread* first_terminated = 0;
+struct kthread* cleaner_task = 0;
 static uint32_t next_pid = 1;
 static uint32_t next_tid = 1;
 
@@ -100,6 +100,13 @@ void schedule(void)
         switch_to_task(task);
     }
 }
+void block_task(int reason) {
+    lock_scheduler();
+    current_task_TCB->s = reason;
+    schedule();
+    unlock_scheduler();
+}
+
 void unblock_task(struct kthread * task) {
     lock_scheduler();
     if((first_ready == 0) || (current_task_TCB->tid == 333)) {
@@ -116,3 +123,83 @@ void unblock_task(struct kthread * task) {
     unlock_scheduler();
 }
 
+void terminate_task(void)
+{
+
+    lock_stuff();
+
+    lock_scheduler();
+    current_task_TCB->next = first_terminated;
+    first_terminated = current_task_TCB;
+    unlock_scheduler();
+
+    block_task(TERMINATED);
+
+    unblock_task(cleaner_task);
+}
+SEMAPHORE* create_semaphore(int max_count)
+{
+    SEMAPHORE* semaphore;
+    semaphore = kalloc(sizeof(SEMAPHORE));
+    if(semaphore != 0)
+    {
+        semaphore->max_count = max_count;
+        semaphore->current_count = 0;
+        semaphore->first_waiting_task = 0;
+        semaphore->last_waiting_task = 0;
+    }
+}
+SEMAPHORE* create_mutex(void)
+{
+    return create_semaphore(1);
+}
+
+void acquire_semaphore(SEMAPHORE* semaphore)
+{
+    lock_stuff();
+    if(semaphore->current_count < semaphore->max_count)
+    {
+        semaphore->current_count++;
+    }
+    else
+    {
+        current_task_TCB->next = 0;
+        if(semaphore->first_waiting_task == 0)
+        {
+            semaphore->first_waiting_task = current_task_TCB;
+        }
+        else
+        {
+            semaphore->last_waiting_task->next = current_task_TCB;
+        }
+        semaphore->last_waiting_task = current_task_TCB;
+        block_task(WAITING_FOR_LOCK);
+    }
+    unlock_stuff();
+}
+void acquire_mutex(SEMAPHORE* semaphore)
+{
+    acquire_semaphore(semaphore);
+}
+
+void release_semaphore(SEMAPHORE* semaphore)
+{
+    lock_stuff();
+    if(semaphore->first_waiting_task != 0)
+    {
+        struct kthread* task = semaphore->first_waiting_task;
+        semaphore->first_waiting_task = task->next;
+        unblock_task(task);
+    }
+    else
+    {
+        semaphore->current_count--;
+    }
+    unlock_stuff();
+}
+
+void release_mutex(SEMAPHORE* semaphore)
+{
+    release_semaphore(semaphore);
+
+}

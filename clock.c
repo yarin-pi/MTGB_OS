@@ -19,8 +19,8 @@ void pit_set_frequency(uint32_t frequency)
 __attribute__((interrupt, target("general-regs-only"))) void pit_isr(struct interrupt_frame *frame)
 {
 
-    struct kthread* next_task;
-    struct kthread* this_task;
+    struct kthread* next_task = 0;
+    struct kthread* this_task = 0;
 
     lock_stuff();
     time_since_boot += time_between_ticks;

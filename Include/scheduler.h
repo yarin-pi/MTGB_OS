@@ -30,6 +30,14 @@ struct kprocess
     struct kprocess *children; // Pointer to child processes
     
 };
+
+typedef struct 
+{
+    int max_count;
+    int current_count;
+    struct kthread* first_waiting_task;
+    struct kthread* last_waiting_task;
+} SEMAPHORE;
 extern void switch_to_task(struct kthread* tcb);
 extern struct kthread* current_task_TCB;
 extern struct kthread* first_sleep;

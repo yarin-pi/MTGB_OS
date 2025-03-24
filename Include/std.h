@@ -21,7 +21,8 @@ typedef enum
     READY,
     RUNNING,
     BLOCKED,
-    TERMINATED
+    TERMINATED,
+    WAITING_FOR_LOCK
 } state;
 struct interrupt_frame
 {
