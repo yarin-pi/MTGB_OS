@@ -2,14 +2,17 @@
 #define SCHEDULER_H
 #include "std.h"
 #define MAX_THREADS 32
+#define TIME_SLICE_LENGTH 30000000
 struct kthread
 {
-    void *arg;
+    void *cr3;
     state s;
     uint32_t *stack;
+    uint32_t* eip;
     uint32_t tid;
     uint32_t parent_pid;
-    uint32_t timeSlice;
+    uint32_t sleep_expiry;
+    uint32_t time_slice;
     struct kthread *next;
     
 };
@@ -29,21 +32,14 @@ struct kprocess
 };
 extern void switch_to_task(struct kthread* tcb);
 extern struct kthread* current_task_TCB;
+extern struct kthread* first_sleep;
+extern struct kthread* last_sleep;
 extern uint32_t postpone_task_switches_counter;
 extern uint32_t task_switches_postponed_flag;
+void lock_stuff(void);
 // Scheduler functions
-void scheduler_init(void);
-void scheduler_next(void);
-void schedule_thread(struct kthread *thread);
-void switch_thread(struct kthread *old, struct kthread *new);
-struct kprocess *init_task(void);
-void destroy_process(struct kprocess *proc);
-
-// Thread management functions
-struct kthread *create_thread(struct kprocess *proc, void *entry);
-void destroy_thread(struct kthread *thread);
-void update_time_slice(void); // Function to update time slice for threads and processes
-void reset_time_slice(struct kthread *thread);
-struct kprocess *fork_process(struct kprocess *parent);
+void unlock_stuff(void);
+void unblock_task(struct kthread * task);
+void schedule(void);
 
 #endif SCHEDULER_H

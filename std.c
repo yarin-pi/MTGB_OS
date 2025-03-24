@@ -1,5 +1,6 @@
 #include "std.h"
 #include "vm.h"
+uint32_t time_slice_remaining = 0;
 void reverse(char str[], int length)
 {
     int start = 0;
