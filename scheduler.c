@@ -7,13 +7,29 @@ struct kthread* first_sleep = 0;
 struct kthread* last_sleep = 0;
 struct kthread* first_terminated = 0;
 struct kthread* cleaner_task = 0;
-static uint32_t next_pid = 1;
+
 static uint32_t next_tid = 1;
 
 uint32_t IRQ_disable_counter = 0;
 uint32_t postpone_task_switches_counter = 0;
 uint32_t task_switches_postponed_flag = 0;
 
+struct kthread* init_task(uint32_t* phy_cr3, uint32_t* stack, uint32_t* entry_point, bool isIdle)
+{
+    struct kthread* thread = (struct kthread*)kalloc(sizeof(struct kthread));
+    thread->cr3 = phy_cr3;
+    thread->eip = entry_point;
+    thread->stack = stack;
+    thread->s = READY;
+    if(isIdle)
+    {
+        thread->tid = 333;
+    }
+    else{
+        thread->tid = next_tid++;
+    }
+    return thread;
+}
 void switch_to_task_wrapper(struct kthread* task)
 {
     if(postpone_task_switches_counter != 0)
@@ -97,7 +113,7 @@ void schedule(void)
 
             }
         }
-        switch_to_task(task);
+        switch_to_task_wrapper(task);
     }
 }
 void block_task(int reason) {
@@ -113,7 +129,7 @@ void unblock_task(struct kthread * task) {
 
         // Only one task was running before, so pre-empt
 
-        switch_to_task(task);
+        switch_to_task_wrapper(task);
     } else {
         // There's at least one task on the "ready to run" queue already, so don't pre-empt
 
