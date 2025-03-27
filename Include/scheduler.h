@@ -3,6 +3,8 @@
 #include "std.h"
 #define MAX_THREADS 32
 #define TIME_SLICE_LENGTH 30000000
+#define JUMP_TO(address) \
+    asm volatile ("jmp *%0" :: "r"(address))
 struct kthread
 {
     void *cr3;
@@ -10,7 +12,7 @@ struct kthread
     uint32_t *stack;
     uint32_t* eip;
     uint32_t tid;
-    uint32_t parent_pid;
+    uint32_t isUser;
     uint32_t sleep_expiry;
     uint32_t time_slice;
     struct kthread *next;
@@ -38,6 +40,7 @@ typedef struct
     struct kthread* first_waiting_task;
     struct kthread* last_waiting_task;
 } SEMAPHORE;
+struct kthread* init_task(uint32_t* phy_cr3, uint32_t* stack, uint32_t* entry_point, int isIdle, int isUser);
 extern void switch_to_task(struct kthread* tcb);
 extern struct kthread* current_task_TCB;
 extern struct kthread* first_sleep;

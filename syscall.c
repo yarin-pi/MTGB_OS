@@ -25,8 +25,7 @@ __attribute__((interrupt, target("general-regs-only"))) void handle_syscall(stru
         print(text);
         break;
     default:
-        print("unknown syscall number: ");
-        print_int(edi, 10);
+        kprintf("unknown syscall number: %d", edi);
         break;
     }
 }

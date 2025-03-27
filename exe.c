@@ -1,3 +1,4 @@
+#include "scheduler.h"
 #include "exe.h"
 
 
@@ -97,7 +98,7 @@ void *elf_load_rel(ELFHeader *hdr)
 }
 uint32_t k_stack;
 uint32_t current = 0xf0000000 - 0x400000 - 0xf;
-void *elf_load_file(void *file)
+struct kthread* elf_load_file(void *file)
 {
     ELFHeader *hdr = (ELFHeader *)file;
     if (!validate_elf(hdr))
@@ -129,9 +130,11 @@ void *elf_load_file(void *file)
         sf[Spdindex].rw = 1;
         sf[Spdindex].user = 1;
         current -= 0x400000;
-        jump_usermode(hdr->e_entry,virt_to_phys(sf),esp);
+        return init_task(virt_to_phys(sf),esp,hdr->e_entry,0,1);
+        //jump_usermode(hdr->e_entry,virt_to_phys(sf),esp);
     case ET_REL:
-        return elf_load_rel(hdr);
+        printf("os isnt suporrting relocation!");
+        return (struct kthread* )0;
     }
     return 0;
 }

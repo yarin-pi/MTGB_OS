@@ -1,5 +1,6 @@
 #include "scheduler.h"
 #include "vm.h"
+#include "gdt.h"
 struct kthread* current_task_TCB = 0;
 struct kthread* first_ready = 0;
 struct kthread* last_ready = 0;
@@ -14,19 +15,24 @@ uint32_t IRQ_disable_counter = 0;
 uint32_t postpone_task_switches_counter = 0;
 uint32_t task_switches_postponed_flag = 0;
 
-struct kthread* init_task(uint32_t* phy_cr3, uint32_t* stack, uint32_t* entry_point, bool isIdle)
+struct kthread* init_task(uint32_t* phy_cr3, uint32_t* stack, uint32_t* entry_point, int isIdle, int isUser)
 {
     struct kthread* thread = (struct kthread*)kalloc(sizeof(struct kthread));
     thread->cr3 = phy_cr3;
     thread->eip = entry_point;
     thread->stack = stack;
     thread->s = READY;
+    thread->isUser = isUser;
     if(isIdle)
     {
         thread->tid = 333;
     }
     else{
         thread->tid = next_tid++;
+    }
+    if(!first_ready)
+    {
+       first_ready = thread;
     }
     return thread;
 }
@@ -46,7 +52,15 @@ void switch_to_task_wrapper(struct kthread* task)
         time_slice_remaining = TIME_SLICE_LENGTH;
 
     }
-    switch_to_task(task);
+    switch_to_task(task); 
+    if(task->isUser)
+    {
+        jump_usermode(task->eip,task->cr3,task->stack);
+    }
+    else
+    {
+        JUMP_TO(task->eip);
+    }
 
 }
 void kernel_idle_task(void) {

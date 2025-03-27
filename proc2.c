@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include "stdl.h"
 
 void swap(int* ptr1, int* ptr2)
 {
@@ -23,10 +23,14 @@ void sort(int* arr, int len)
 int main()
 {
     int ar[10] = {4,2,7,19,24,14,35,23,11,44};
+    char t[2] = {0,0};
     sort(ar,10);
     for(int i = 0; i < 10;i++)
     {
-        printf("%d, ",ar[i]);
+        t[0] = ar[i];
+        print(t);
+        print("\n");
+        wait(1);
 
     }
 }
