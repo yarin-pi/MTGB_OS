@@ -1,25 +1,32 @@
 #include "scheduler.h"
 #include "vm.h"
 #include "gdt.h"
+volatile uint32_t time_since_boot = 0;
 struct kthread* current_task_TCB = 0;
 struct kthread* first_ready = 0;
 struct kthread* last_ready = 0;
 struct kthread* first_sleep = 0;
-struct kthread* last_sleep = 0;
 struct kthread* first_terminated = 0;
 struct kthread* cleaner_task = 0;
-
 static uint32_t next_tid = 1;
 
 uint32_t IRQ_disable_counter = 0;
 uint32_t postpone_task_switches_counter = 0;
 uint32_t task_switches_postponed_flag = 0;
+void init_scheduler(void)
+{
+    cleaner_task = init_task(page_directory,get_esp(),cleaner_t,0,0);
+    last_ready = init_task(page_directory,get_esp(),kernel_idle_task,1,0);
 
-struct kthread* init_task(uint32_t* phy_cr3, uint32_t* stack, uint32_t* entry_point, int isIdle, int isUser)
+
+}
+
+struct kthread* init_task(uint32_t* vir_cr3, uint32_t* stack, uint32_t* entry_point, int isIdle, int isUser)
 {
     struct kthread* thread = (struct kthread*)kalloc(sizeof(struct kthread));
-    thread->cr3 = phy_cr3;
+    thread->cr3 = vir_cr3;
     thread->eip = entry_point;
+    thread->stack_top = stack;
     thread->stack = stack;
     thread->s = READY;
     thread->isUser = isUser;
@@ -30,14 +37,26 @@ struct kthread* init_task(uint32_t* phy_cr3, uint32_t* stack, uint32_t* entry_po
     else{
         thread->tid = next_tid++;
     }
+    struct kthread* curr = first_ready;
     if(!first_ready)
     {
        first_ready = thread;
     }
+    else
+    {
+        while(curr->next)
+        {
+            curr = curr->next;
+        }
+        curr->next = thread;
+    }
+
+    
     return thread;
 }
 void switch_to_task_wrapper(struct kthread* task)
 {
+    asm volatile("cli");
     if(postpone_task_switches_counter != 0)
     {
         task_switches_postponed_flag = 1;
@@ -55,7 +74,7 @@ void switch_to_task_wrapper(struct kthread* task)
     switch_to_task(task); 
     if(task->isUser)
     {
-        jump_usermode(task->eip,task->cr3,task->stack);
+        jump_usermode(task->eip,virt_to_phys(task->cr3),task->stack);
     }
     else
     {
@@ -65,7 +84,7 @@ void switch_to_task_wrapper(struct kthread* task)
 }
 void kernel_idle_task(void) {
     for(;;) {
-        HLT();
+        asm volatile("hlt");
     }
 }
 void lock_scheduler(void) {
@@ -127,6 +146,7 @@ void schedule(void)
 
             }
         }
+        
         switch_to_task_wrapper(task);
     }
 }
@@ -166,6 +186,29 @@ void terminate_task(void)
     block_task(TERMINATED);
 
     unblock_task(cleaner_task);
+}
+void cleaner_t(void)
+{
+    struct kthread* task;
+    lock_stuff();
+    while(first_terminated != 0)
+    {
+        task = first_terminated;
+        first_terminated = task->next;
+        clean_up_terminated_task(task);
+        
+    }
+    block_task(BLOCKED);
+    unlock_stuff();
+}
+void clean_up_terminated_task(struct kthread* task)
+{
+    if(task->isUser){
+         kfree(task->cr3,4);
+    }
+    kfree(task,sizeof(struct kthread));
+    
+    
 }
 SEMAPHORE* create_semaphore(int max_count)
 {

@@ -3,9 +3,11 @@
 #include "fs.h"
 #include "print.h"
 #include "exe.h"
+#include "scheduler.h"
 
 __attribute__((interrupt, target("general-regs-only"))) void handle_syscall(struct interrupt_frame *frame)
 {
+    lock_stuff();
     uint32_t edi = get_edi_value();
     uint32_t esi = get_esi_value();
     uint32_t ecx = get_ecx_value();
@@ -24,10 +26,15 @@ __attribute__((interrupt, target("general-regs-only"))) void handle_syscall(stru
         char *text = esi;
         print(text);
         break;
+    case SYS_TIMER:
+        int sec = esi;
+        current_task_TCB->sleep_expiry = time_since_boot + sec * 10;
+        block_task(BLOCKED);
     default:
         kprintf("unknown syscall number: %d", edi);
         break;
     }
+    unlock_stuff();
 }
 uint32_t get_edi_value()
 {
@@ -62,12 +69,13 @@ void *get_ecx_value()
     );
     return ecx_value;
 }
-void do_null()
-{
-    while(1);
-}
+
 __attribute__((interrupt, target("general-regs-only"))) void switch_to_kernel(struct interrupt_frame* frame)
 {
-    do_null();
+    lock_scheduler();
+    outb(0x20,0x20);
+    terminate_task();
+    unlock_scheduler();
+    
 }
 

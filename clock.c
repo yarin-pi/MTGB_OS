@@ -2,12 +2,12 @@
 #include "clock.h"
 #include "idt.h"
 
-volatile uint32_t time_since_boot = 0;
-volatile uint32_t time_between_ticks = 10000000;
+
+volatile uint32_t time_between_ticks = 10;
 
 void pit_set_frequency(uint32_t frequency)
 {
-    pit_ticks = 0x0;
+    
     uint16_t divisor = (uint16_t)(PIT_FREQUENCY / (frequency ? frequency : 1));
     if (divisor == 0)
         divisor = 1;                                 // Ensure valid divisor
@@ -32,7 +32,7 @@ __attribute__((interrupt, target("general-regs-only"))) void pit_isr(struct inte
     {
         this_task = next_task;
         next_task = this_task->next;
-        if(this_task->sleep_expiry <= pit_ticks)
+        if(this_task->sleep_expiry <= time_since_boot)
         {
             unblock_task(this_task);
         }
@@ -55,26 +55,15 @@ __attribute__((interrupt, target("general-regs-only"))) void pit_isr(struct inte
         }
     }
 
-    unlock_stuff();
+    
     outb(0x20, 0x20);
 }
 
-void wait_ticks(uint32_t ticks)
-{
-    uint32_t s = pit_ticks;
-    while ((pit_ticks - s) < ticks)
-    {
-        asm volatile("sti; hlt");
-    }
-}
+
 
 void clock_init()
 {
     set_idt_entry(32, (uint32_t)HIGHER_HALF(pit_isr), 0x08, 0x8E);
 
     pit_set_frequency(100);
-}
-int return_tick()
-{
-    return pit_ticks;
 }

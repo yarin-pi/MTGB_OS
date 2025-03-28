@@ -74,12 +74,20 @@ int _start()
     asm volatile("sti");
     FatInitImage(port);
     init_kalloc();
-    char *arrxe = (char *)kalloc(0x24a8);
-    getContent("/simple.elf", (void *)arrxe);
+    char *simple = (char *)kalloc(0x24a8);
+    char* proc1 = (char*)kalloc(10000);
+    char* proc2 = (char*)kalloc(10000);
+    getContent("/simple.elf", (void *)simple);
+    getContent("/proc1.elf", (void*)proc1);
+    getContent("/proc2.elf",(void*)proc2); 
     clear_screen();
     enable_keyboard_interrupt();
+    elf_load_file(simple);
+    elf_load_file(proc1);
+    elf_load_file(proc2);
+    init_scheduler();
     clock_init();
-    elf_load_file(arrxe);
+    schedule();
     
     
     uint32_t *ptr = kalloc(0x1000);

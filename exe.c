@@ -130,10 +130,10 @@ struct kthread* elf_load_file(void *file)
         sf[Spdindex].rw = 1;
         sf[Spdindex].user = 1;
         current -= 0x400000;
-        return init_task(virt_to_phys(sf),esp,hdr->e_entry,0,1);
+        return init_task(sf,esp,hdr->e_entry,0,1);
         //jump_usermode(hdr->e_entry,virt_to_phys(sf),esp);
     case ET_REL:
-        printf("os isnt suporrting relocation!");
+        kprintf("os isnt suporrting relocation!");
         return (struct kthread* )0;
     }
     return 0;

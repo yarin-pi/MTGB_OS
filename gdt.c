@@ -39,7 +39,8 @@ void jump_usermode(void *user_function, page_directory_entry_t* pd, uint32_t use
         "or $0x200, %%eax\n"        // Set Interrupt Flag (IF)
         "push %%eax\n"
         "push %2\n"                 // Push Ring 3 CS
-        "push %3\n"                 // Push user function address (entry point)
+        "push %3\n"    
+        "sti\n"             // Push user function address (entry point)
         "iret\n"                    // Perform the far jump to user function
         :
         : "r" (pd),                      // Page directory (address of PD)
