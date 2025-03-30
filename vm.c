@@ -1,15 +1,13 @@
-#include "vm.h"
 
+#include "vm.h"
 #define PAGE_PRESENT 0x1
 #define PAGE_RW 0x2
 #define PAGE_4MB 0x80
-
 page_table_entry_t page_table[1024] __attribute__((aligned(0x1000)));
 page_table_entry_t page_table2[1024] __attribute__((aligned(0x1000)));
 page_table_entry_t page_table3[1024] __attribute__((aligned(0x1000)));
 page_table_entry_t page_table4[1024] __attribute__((aligned(0x1000)));
 page_directory_entry_t page_directory[1024] __attribute__((aligned(0x1000)));
-
 Buddy bud;
 Buddy pbud;
 void *setup_identity_mapping()
@@ -25,7 +23,6 @@ void *setup_identity_mapping()
     page_directory[0].rw = 1;
     page_directory[0].user = 0;
     page_directory[0].table_addr = ((uint32_t)page_table) >> 12;
-
     // Map higher-half kernel (0xC0000000 -> 0x00100000)
     for (int i = 0; i < 1024; i++)
     {
@@ -38,7 +35,6 @@ void *setup_identity_mapping()
     page_directory[768].rw = 1;
     page_directory[768].user = 0;
     page_directory[768].table_addr = ((uint32_t)page_table2) >> 12;
-
     for (int i = 0; i < 1024; i++)
     {
         page_table3[i].present = 1;
@@ -50,14 +46,12 @@ void *setup_identity_mapping()
     page_directory[1].rw = 1;
     page_directory[1].user = 0;
     page_directory[1].table_addr = ((uint32_t)page_table3) >> 12;
-
     return (void *)page_directory;
 }
 void switch_page_directory(uint32_t *new_pd)
 {
     asm volatile("mov %0, %%cr3" ::"r"(new_pd));
 }
-
 void enb_4mb()
 {
     uint32_t base_addr = 0x00800000; // Start from 8MB
@@ -239,11 +233,12 @@ void kfree(void *addr, uint32_t size)
 
 void init_palloc()
 {
-    pbud.base_address = 0x40000000;
-    pbud.total_size = 0xc0000000 - 0x40000000;
+    pbud.base_address = 0x60000000;
+    pbud.total_size = 0xc0000000 - 0x60000000;
     pbud.max_order = 3;
     init_buddy(&pbud, 1);
 }
+
 page_table_entry_t *tmp;
 void palloc(ProgramHeader *ph, void *f_addr, page_directory_entry_t *pd)
 {

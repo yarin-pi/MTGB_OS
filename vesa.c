@@ -34,6 +34,20 @@ void put_pixel(int x, int y, uint32_t color)
         *pixel_offset = color;
     }
 }
+void put_pixelrgb(int x, int y, uint8_t r, uint8_t g, uint8_t b)
+{
+    if (x >= 0 && x < width && y >= 0 && y < height)
+    {
+        // Combine r, g, b into a single uint32_t value (assuming 32-bit color with 8 bits per channel)
+        uint32_t color = (r << 16) | (g << 8) | b;
+
+        // Calculate the pixel offset in the framebuffer
+        uint32_t *pixel_offset = (y * pitch) + (x * (bpp / 8)) + framebuffer;
+
+        // Set the pixel color
+        *pixel_offset = color;
+    }
+}
 void init_framebuffer()
 {
     vbe_mode_info_structure *mode = (vbe_mode_info_structure *)0x8000;
@@ -158,3 +172,29 @@ void DrawText(char *string, uint32_t x, uint32_t y, uint32_t color)
     }
 }
 // Function to draw a string of text
+void DrawImage(Bitmap *bmp, int locX, int locY, int zoom)
+{
+    int xpos = 0, ypos = 0, x, y;
+    int zoomX, zoomY;
+
+    for (y = 0; y < bmp->Height; y++)
+    {
+        for (int x = 0; x < bmp->Width * 3; x += 3)
+        {
+            for (zoomX = 0; zoomX < zoom; zoomX++)
+            {
+                for (zoomY = 0; zoomY < zoom; zoomY++)
+                {
+                    put_pixelrgb(locX + xpos, locY + ypos, bmp->ImageRGB[(y * bmp->Width * 3 + x)],
+                                 bmp->ImageRGB[(y * bmp->Width * 3 + x + 1)],
+                                 bmp->ImageRGB[(y * bmp->Width * 3 + x + 2)]);
+                    ypos++;
+                }
+                xpos++;
+                ypos -= zoom;
+            }
+        }
+        xpos = 0;
+        ypos += zoom;
+    }
+}

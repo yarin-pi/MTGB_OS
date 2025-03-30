@@ -1,6 +1,40 @@
 #ifndef VESA_H
 #define VESA_H
 #include "std.h"
+
+typedef struct
+{
+    uint16_t Signature;
+    uint32_t FileSize;
+    uint32_t Reserved;
+    uint32_t DataOffset;
+
+    uint32_t Size;
+    uint32_t Width;
+    uint32_t Height;
+    uint16_t Planes;
+    uint16_t BitsPerPixel;
+    uint32_t CompressionMethod;
+    uint32_t ImageSize;
+    uint32_t XPixelsPerM;
+    uint32_t YPixelsPerM;
+    uint32_t ColorsUsed;
+    uint32_t ImportantColors;
+} ImageHeader;
+
+// Define the Bitmap struct (similar to the class)
+typedef struct
+{
+    uint8_t *Buffer;
+    uint8_t BitsPerPixel;
+    uint8_t *Palette;
+    uint8_t *Data;
+    int bytesPerScanline;
+
+    int Width;
+    int Height;
+    uint8_t *ImageRGB;
+} Bitmap;
 struct vbe_info_structure
 {
     char signature[4];     // must be "VESA" to indicate valid VBE support
@@ -65,4 +99,6 @@ void DrawText(char *string, uint32_t x, uint32_t y, uint32_t color);
 void vesa_newline();
 void shift_up();
 void vesa_putchar(char c);
+void DrawImage(Bitmap *bmp, int locX, int locY, int zoom);
+
 #endif VESA_H
