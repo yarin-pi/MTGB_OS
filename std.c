@@ -76,7 +76,15 @@ void *memset(void *ptr, int value, int num)
     }
     return ptr;
 }
-
+uint32_t str_to_int(const char *str)
+{
+    int res = 0, sign = 1, i = 0;
+    if (str[0] == '-')
+        sign = -1, i++;
+    for (; str[i] >= '0' && str[i] <= '9'; i++)
+        res = res * 10 + (str[i] - '0');
+    return res * sign;
+}
 uint32_t strlen(const char *str)
 {
     uint32_t len = 0;
@@ -194,7 +202,7 @@ char *append_strings(const char *str1, const char *str2)
 
     return result;
 }
-int fstrcmp(const char* str1, const char* str2)
+int fstrcmp(const char *str1, const char *str2)
 {
-    return strcmp(str1,str2,8);
+    return strcmp(str1, str2, 8);
 }

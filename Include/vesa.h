@@ -17,7 +17,7 @@ struct vbe_info_structure
     uint8_t oem_data[256]; // OEM BIOSes store their strings in this area
 } __attribute__((packed));
 
-struct vbe_mode_info_structure
+typedef struct
 {
     uint16_t attributes;  // deprecated, only bit 7 should be of interest to you, and it indicates the mode supports a linear frame buffer.
     uint8_t window_a;     // deprecated
@@ -54,9 +54,15 @@ struct vbe_mode_info_structure
     uint32_t off_screen_mem_off;
     uint16_t off_screen_mem_size; // size of memory in the framebuffer but not being displayed on the screen
     uint8_t reserved1[206];
-} __attribute__((packed));
+} __attribute__((packed)) vbe_mode_info_structure;
 
 void put_pixel(int x, int y, uint32_t color);
-void draw_test_pattern();
-void init_framebuffer(); 
+void init_framebuffer();
+void vesa_set_cursor(uint8_t x, uint8_t y);
+void draw_background(uint32_t color);
+void DrawTransparentChar16(char c, uint32_t x, uint32_t y, uint32_t color);
+void DrawText(char *string, uint32_t x, uint32_t y, uint32_t color);
+void vesa_newline();
+void shift_up();
+void vesa_putchar(char c);
 #endif VESA_H

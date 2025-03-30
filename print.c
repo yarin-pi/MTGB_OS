@@ -1,6 +1,6 @@
 #include "print.h"
 #include "std.h"
-
+#include "vesa.h"
 #define VGA_WIDTH 80
 #define VGA_HEIGHT 25
 #define VGA_BUFFER 0xc0150000
@@ -13,14 +13,8 @@ uint8_t cursor_x = 0;                          // Current cursor position (x)
 uint8_t cursor_y = 0;                          // Current cursor position (y)
 void clear_screen()
 {
-    int i;
-    for (i = 0; i < VGA_WIDTH * VGA_HEIGHT; i++)
-    {
-        vga_buffer[i] = (DEFAULT_COLOR << 8) | ' '; // Blank space with default color
-    }
-    cursor_x = 0;
-    cursor_y = 0;
-    move_cursor();
+    draw_background(0);
+    vesa_set_cursor(0, 0);
 }
 
 void move_cursor()
@@ -37,6 +31,10 @@ void move_cursor()
     outb(0x3D5, position & 0xFF);
 }
 
+void vprint_char(char c)
+{
+    vesa_putchar(c);
+}
 void print_char(char c)
 {
     if (c == '\n')
@@ -75,12 +73,20 @@ void print_char(char c)
 }
 void print(const char *str)
 {
-    
+
     for (int i = 0; str[i] != '\0'; i++)
     {
         print_char(str[i]);
     }
 }
+void vprint(const char *str)
+{
+    for (int i = 0; str[i] != '\0'; i++)
+    {
+        vprint_char(str[i]);
+    }
+}
+
 void delete_char()
 {
     if (cursor_x > 0)
@@ -96,6 +102,13 @@ void delete_char()
     // Clear the character at the current cursor position
     vga_buffer[cursor_y * VGA_WIDTH + cursor_x] = (DEFAULT_COLOR << 8) | ' ';
     move_cursor();
+}
+void vprint_int(uint32_t i, int base)
+{
+    char *num[32];
+    int_to_string(i, num, base);
+    vprint(num);
+    vprint("\n");
 }
 void print_int(uint32_t i, int base)
 {

@@ -1,8 +1,8 @@
 #include "vm.h"
 
-#define PAGE_PRESENT  0x1
-#define PAGE_RW       0x2
-#define PAGE_4MB      0x80 
+#define PAGE_PRESENT 0x1
+#define PAGE_RW 0x2
+#define PAGE_4MB 0x80
 
 page_table_entry_t page_table[1024] __attribute__((aligned(0x1000)));
 page_table_entry_t page_table2[1024] __attribute__((aligned(0x1000)));
@@ -53,33 +53,44 @@ void *setup_identity_mapping()
 
     return (void *)page_directory;
 }
-void switch_page_directory(uint32_t* new_pd) {
-    asm volatile ("mov %0, %%cr3" :: "r"(new_pd));
+void switch_page_directory(uint32_t *new_pd)
+{
+    asm volatile("mov %0, %%cr3" ::"r"(new_pd));
 }
 
 void enb_4mb()
 {
-    uint32_t base_addr = 0x00800000;  // Start from 8MB
-    for (int i = 0; i < 199; i++)  // 199 * 4MB = 796MB
+    uint32_t base_addr = 0x00800000; // Start from 8MB
+    for (int i = 0; i < 199; i++)    // 199 * 4MB = 796MB
     {
         page_directory[769 + i].present = 1;
         page_directory[769 + i].rw = 1;
         page_directory[769 + i].user = 0;
-        page_directory[769 + i].page_size = 1;  // Set PS bit for 4MB pages
+        page_directory[769 + i].page_size = 1;                  // Set PS bit for 4MB pages
         page_directory[769 + i].table_addr = (base_addr >> 12); // Correct shift
-        base_addr += 0x400000;  // Move to next 4MB region
+        base_addr += 0x400000;                                  // Move to next 4MB region
     }
 }
 void map_page(void *physaddr, void *virtualaddr, unsigned int flags, page_table_entry_t *page_table)
 {
     unsigned long pdindex = (unsigned long)virtualaddr >> 22;
     unsigned long ptindex = (unsigned long)virtualaddr >> 12 & 0x03FF;
-
-    page_table[ptindex].present = 1;
-    page_table[ptindex].frame_addr = (unsigned long)physaddr >> 12;
-    page_table[ptindex].rw = 1;
-    page_table[ptindex].accessed = 1;
-    page_table[ptindex].user = 0;
+    if (flags == 1)
+    {
+        page_directory[pdindex].present = 1;
+        page_directory[pdindex].table_addr = (unsigned long)physaddr >> 12;
+        page_directory[pdindex].rw = 1;
+        page_directory[pdindex].user = 0;
+        page_directory[pdindex].page_size = 1;
+    }
+    else
+    {
+        page_table[ptindex].present = 1;
+        page_table[ptindex].frame_addr = (unsigned long)physaddr >> 12;
+        page_table[ptindex].rw = 1;
+        page_table[ptindex].accessed = 1;
+        page_table[ptindex].user = 0;
+    }
 }
 void unmap_page(void *virtual_address, page_table_entry_t *page_table)
 {
@@ -107,35 +118,36 @@ void set_present(void *virtual_address, page_table_entry_t *page_table)
     uint32_t pt_index = (vaddr >> 12) & 0x3FF; // Next 10 bits
     if (!page_table)
     {
-        
+
         return;
     }
 
     page_table[pt_index].present = 1;
-
 }
 uint32_t *virt_to_phys(void *virtual)
 {
     int pdi_index = (unsigned long)virtual >> 22;
     int pti_index = (unsigned long)virtual >> 12 & 0x3ff;
     int offset = (unsigned long)virtual & 0xfff;
-    if(page_directory[pdi_index].page_size)
+    if (page_directory[pdi_index].page_size)
     {
         offset = (unsigned int)virtual & 0x3fffff;
-        return (page_directory[pdi_index].table_addr << 12 ) | offset;
+        return (page_directory[pdi_index].table_addr << 12) | offset;
     }
     page_table_entry_t *ent = page_directory[pdi_index].table_addr << 12;
     ent = HIGHER_HALF(ent);
     return ((ent[pti_index].frame_addr << 12) | offset);
 }
-page_directory_entry_t* create_page_directory() {
-    page_directory_entry_t* new_pd = (uint32_t*)kalloc(4096);
+page_directory_entry_t *create_page_directory()
+{
+    page_directory_entry_t *new_pd = (uint32_t *)kalloc(4096);
     memset(new_pd, 0, 4096);
 
     // Copy kernel mappings (last 256 entries)
     new_pd[0] = page_directory[0];
     new_pd[1] = page_directory[1];
-    for (int i = 768; i < 1024; i++) {
+    for (int i = 768; i < 1024; i++)
+    {
         new_pd[i] = page_directory[i];
     }
 
@@ -197,7 +209,7 @@ void init_kalloc()
     bud.base_address = HEAP_ADDR;
     bud.total_size = HEAP_SIZE;
     bud.max_order = 3;
-    init_buddy(&bud,0);
+    init_buddy(&bud, 0);
 }
 
 void *kalloc(uint32_t size)
@@ -208,8 +220,8 @@ void *kalloc(uint32_t size)
         return 0;
     }
 
-    void *phys_ptr = balloc(&bud, size,0);
-    set_present(phys_ptr,page_table4);
+    void *phys_ptr = balloc(&bud, size, 0);
+    set_present(phys_ptr, page_table4);
 
     return phys_ptr;
 }
@@ -222,7 +234,7 @@ void kfree(void *addr, uint32_t size)
     }
 
     unmap_page(addr, page_table4);
-    bfree(&bud, addr, size >> 12,0);
+    bfree(&bud, addr, size >> 12, 0);
 }
 
 void init_palloc()
@@ -230,41 +242,45 @@ void init_palloc()
     pbud.base_address = 0x40000000;
     pbud.total_size = 0xc0000000 - 0x40000000;
     pbud.max_order = 3;
-    init_buddy(&pbud,1);
+    init_buddy(&pbud, 1);
 }
-page_table_entry_t* tmp;
-void palloc(ProgramHeader* ph, void* f_addr, page_directory_entry_t* pd) {
-    char* adr = (char*)f_addr + ph->p_offset;
+page_table_entry_t *tmp;
+void palloc(ProgramHeader *ph, void *f_addr, page_directory_entry_t *pd)
+{
+    char *adr = (char *)f_addr + ph->p_offset;
     unsigned long pdindex = (unsigned long)ph->p_vaddr >> 22;
     unsigned long ptindex = (unsigned long)ph->p_vaddr >> 12 & 0x03FF;
 
     // Check if Page Table exists
-    page_table_entry_t* Page;
-    if (!pd[pdindex].present) {
-        Page = (page_table_entry_t*)kalloc(4096);
+    page_table_entry_t *Page;
+    if (!pd[pdindex].present)
+    {
+        Page = (page_table_entry_t *)kalloc(4096);
         tmp = Page;
         memset(Page, 0, 4096); // Clear new page table
-        pd[pdindex].rw = (ph->p_flags & PF_W) ? 1 : 0;  
+        pd[pdindex].rw = (ph->p_flags & PF_W) ? 1 : 0;
         pd[pdindex].present = 1;
         pd[pdindex].user = 1;
         pd[pdindex].table_addr = (uint32_t)virt_to_phys(Page) >> 12;
-    } else {
+    }
+    else
+    {
         Page = tmp;
     }
 
     // Allocate frames and map memory
-    for (int i = 0; i < ph->p_memsz; i += 4096) {
+    for (int i = 0; i < ph->p_memsz; i += 4096)
+    {
         uint32_t inx = i / 4096;
         uint32_t n_ptIn = ptindex + inx;
 
-        Page[n_ptIn].rw = (ph->p_flags & PF_W) ? 1 : 0;  
+        Page[n_ptIn].rw = (ph->p_flags & PF_W) ? 1 : 0;
         Page[n_ptIn].user = 1;
         Page[n_ptIn].present = 1;
         Page[n_ptIn].frame_addr = (uint32_t)balloc(&pbud, 4096, 1) >> 12;
 
-        memcpy(ph->p_vaddr,(void*)adr,ph->p_filesz);
-        
+        memcpy(ph->p_vaddr, (void *)adr, ph->p_filesz);
+
         // Zero out remaining memory if memsz > filesz
-        
     }
 }

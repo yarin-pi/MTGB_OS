@@ -45,6 +45,7 @@ uint8_t inb(uint16_t port);
 int strcmp(const char *str1, const char *str2, uint32_t n);
 int pow(int a, int b);
 char *append_strings(const char *str1, const char *str2);
-int fstrcmp(const char* str1, const char* str2);
+int fstrcmp(const char *str1, const char *str2);
+uint32_t str_to_int(const char *str);
 
 #endif STD_H

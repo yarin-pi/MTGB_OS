@@ -1,7 +1,8 @@
 #include "input.h"
+#include "print.h"
 #include "clock.h"
-abool identifier = 1;
-
+#include "exe.h"
+#include "vesa.h"
 void process_input(const char *input)
 {
     if (strcmp(input, "cls", 4) == 0)
@@ -10,46 +11,55 @@ void process_input(const char *input)
     }
     else if (strcmp(input, "echo ", 5) == 0)
     {
-        char output[100];
-        int i = 0;
-        int j = 0;
-        while (input[i] != ' ' && input[i] != '\0')
-        {
-            i++;
-        }
-
-        // Skip the space after "echo"
-        if (input[i] == ' ')
-        {
-            i++;
-        }
-
-        // Copy the rest of the string (hello world) into output
-        while (input[i] != '\0')
-        {
-            output[j++] = input[i++];
-        }
-        output[j] = '\0'; // Null-terminate the output string
-
-        print("\n");
-        print(output);
-        print("\n");
+        vprint("\n");
+        vprint(input + 5); // Print everything after "echo "
+        vprint("\n");
     }
     else if (strcmp(input, "exit", 5) == 0)
     {
-        print("\nExiting...\n");
+        vprint("\nExiting...\n");
         while (1)
             ;
     }
     else if (strcmp(input, "tick", 5) == 0)
     {
-        print("\n");
-        print_int(return_tick(), 10);
+        vprint("\n");
+        vprint_int(return_tick(), 10);
+    }
+    else if (strcmp(input, "load ", 5) == 0)
+    {
+        char *name = input + 5;
+        vprint("\nloading ");
+        vprint(name);
+        elf_load_file(name);
+    }
+    else if (strcmp(input, "load", 5) == 0)
+    {
+        vprint("\nMissing parameters error: filename is needed");
+    }
+    else if (strcmp(input, "bgcolor ", 5) == 0)
+    {
+        uint32_t c = str_to_int(input + 5);
+        switch (c)
+        {
+        case 1:
+            draw_background(0x00FF0000);
+            break;
+        case 2:
+            draw_background(0x0000FF00);
+            break;
+        case 3:
+            draw_background(0x000000FF);
+            break;
+        default:
+            draw_background(0);
+            break;
+        }
     }
     else
     {
-        print("\n");
-        print(input);
-        print(" is an unknown command\n");
+        vprint("\n");
+        vprint(input);
+        vprint(" is an unknown command\n");
     }
 }

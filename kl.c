@@ -29,10 +29,11 @@ int _start()
 
     enb_4mb();
     MoveHigherHalf();
-
     map_page(0xB8000, 0xC0150000, 0, page_table2);
+
     init_idt();
     load_idt();
+    init_framebuffer();
 
     uint32_t *ahci_add = find_ahci_controller();
     if (!ahci_add)
@@ -44,14 +45,14 @@ int _start()
     HBA_MEM *abar = (HBA_MEM *)(0xc0120000);
 
     probe_port(abar);
+
     abar = (HBA_MEM *)(0xc0120000);
     char *port1 = (char *)(abar) + 0x100;
     HBA_PORT *port = (HBA_PORT *)(port1);
     char num[32]; // Issue command
 
-    print_int((void *)virt_to_phys(0xC0150000), 16);
-
     port_rebase(port, 0);
+
     for (int i = 0; i < IDT_SIZE; i++)
     {
 
@@ -69,21 +70,19 @@ int _start()
 
     setup_gdt();
     asm volatile("sti");
+    print("hello");
     FatInitImage(port);
     init_kalloc();
     char *arrxe = (char *)kalloc(0x24a8);
     getContent("/simple.elf", (void *)arrxe);
-    clear_screen();
     enable_keyboard_interrupt();
     clock_init();
-    // elf_load_file(arrxe);
-    map_page(0xa297464, 0x10000, 0, page_table);
     init_framebuffer();
+    clear_screen();
+    vprint("Welcome to MTGB operating-system!");
+    vprint("\n");
+    // elf_load_file(arrxe);
 
-    while (1)
-    {
-        draw_test_pattern();
-    }
     return 0;
 }
 void MoveHigherHalf()

@@ -7,29 +7,22 @@ __attribute__((interrupt, target("general-regs-only"))) void keyboard_handler(st
 {
     uint8_t scancode = inb(KEYBOARD_DATA_PORT);
     uint8_t c = scancode_to_char(scancode);
-    identifier = TRUE;
 
     if (c != 0 && c != '\0') // Only valid and non-null characters
     {
-        if (c == '\b')
-        {
-            if (buffer_index > 0)
-            {
-                buffer_index--;
-                delete_char();
-            }
-        }
-        else if (c == '\n')
+
+        if (c == '\n')
         {
             input_buffer[buffer_index] = '\0'; // End the input buffer
             process_input(input_buffer);       // Process the buffer
-            buffer_index = 0;                  // Reset buffer
+            vprint_char(c);
+            buffer_index = 0;
         }
         else if (buffer_index < BUFFER_SIZE - 1)
         {
             input_buffer[buffer_index++] = c; // Add character to buffer
-            print_char(c);                    // Print the character
-        }
+            vprint_char(c);
+        } // Print the character
     }
     outb(PIC1_COMMAND, PIC_EOI);
     if (scancode >= 0x28) // If interrupt came from slave PIC
@@ -120,5 +113,6 @@ void enable_keyboard_interrupt()
 
     outb(PIC1_DATA, 0xFC); // OCW1: Unmask IRQ1 (keyboard), mask all others
     outb(PIC2_DATA, 0xFF); // OCW1: Mask all IRQs on slave
+    outb(PIC1_COMMAND, 0x20);
     buffer_index = 0;
 }
