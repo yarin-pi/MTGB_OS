@@ -3,6 +3,7 @@
 #include "idt.h"
 
 
+
 volatile uint32_t time_between_ticks = 10;
 
 void pit_set_frequency(uint32_t frequency)
@@ -21,10 +22,24 @@ __attribute__((interrupt, target("general-regs-only"))) void pit_isr(struct inte
 
     struct kthread* next_task = 0;
     struct kthread* this_task = 0;
+    if(scheduler_enabled)
+    {
 
-    lock_stuff();
+
+        if(frame->cs & 0x3 && frame->sp < 0xf0000000)
+        {
+        //kprintf("i want to kill myself isr \n");
+        current_task_TCB->eip = frame->ip;
+        current_task_TCB->stack = frame->sp;
+        //kprintf("esp isr: %p \n",frame->sp );
+        }
+        
+
+        lock_stuff();
+    }
     time_since_boot += time_between_ticks;
-
+    if(scheduler_enabled)
+    {
     next_task = first_sleep;
     first_sleep = 0;
 
@@ -34,7 +49,14 @@ __attribute__((interrupt, target("general-regs-only"))) void pit_isr(struct inte
         next_task = this_task->next;
         if(this_task->sleep_expiry <= time_since_boot)
         {
-            unblock_task(this_task);
+            if(this_task->tid == 333 && this_task->next)
+            {
+                unblock_task(this_task->next);
+            }
+            else
+            {
+                unblock_task(this_task);
+            }
         }
         else
         {
@@ -47,6 +69,13 @@ __attribute__((interrupt, target("general-regs-only"))) void pit_isr(struct inte
     {
         if(time_slice_remaining <= time_between_ticks)
         {
+            struct kthread* curr = first_ready;
+            while(curr->next != 0)
+            {
+                curr = curr->next;
+            }
+            curr->next = current_task_TCB;
+            current_task_TCB->next = 0;
             schedule();
         }
         else
@@ -54,9 +83,15 @@ __attribute__((interrupt, target("general-regs-only"))) void pit_isr(struct inte
             time_slice_remaining -= time_between_ticks;
         }
     }
+    }
+    
 
     
     outb(0x20, 0x20);
+    if(scheduler_enabled)
+    {
+        unlock_stuff();
+    }
 }
 
 

@@ -3,6 +3,7 @@
 #define SYS_READ 1
 #define SYS_WRITE 2
 #define SYS_PRINT 3
+#define SYS_PRINT_INT 4
 #define SYS_TIMER 7
 
 #include "std.h"

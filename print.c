@@ -32,6 +32,12 @@ void kprintf(const char* fmt,...)
             print(str);
             fmt++;
         }
+        if(*fmt == '%' && *(fmt + 1) == 'p')
+        {
+            int ptr = va_arg(args,int);
+            print_int(ptr,16);
+            fmt++;
+        }
         else{
             print_char(*fmt);
         }
@@ -130,7 +136,7 @@ void print_int(uint32_t i, int base)
     char *no[32];
     int_to_string(i, no, base);
     print(no);
-    print("\n");
+    
 }
 void print_float(float num)
 {

@@ -43,7 +43,7 @@ typedef struct
 } SEMAPHORE;
 extern volatile uint32_t time_since_boot;
 extern struct kthread* first_terminated;
-extern struct kthread* first_sleep;
+extern struct kthread* first_ready;
 void init_scheduler(void);
 struct kthread* init_task(uint32_t* phy_cr3, uint32_t* stack, uint32_t* entry_point, int isIdle, int isUser);
 extern void switch_to_task(struct kthread* tcb);

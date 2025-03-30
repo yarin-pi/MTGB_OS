@@ -35,6 +35,7 @@ struct interrupt_frame
 // Read a 16-bit value from an I/O port
 uint16_t inw(uint16_t port);
 extern uint32_t time_slice_remaining;
+extern uint8_t scheduler_enabled;
 void *memset(void *ptr, int value, int num);
 // Read a 32-bit value from an I/O port
 uint32_t inl(uint16_t port);

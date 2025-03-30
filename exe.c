@@ -62,7 +62,6 @@ page_directory_entry_t* parse_program_headers(ELFHeader *hdr)
         print("No program headers found.\n");
         return;
     }
-    init_palloc();
     page_directory_entry_t* n_pd = create_page_directory();
     switch_page_directory(virt_to_phys(n_pd)); 
     ProgramHeader *ph = (ProgramHeader *)((char *)hdr + hdr->e_phoff);
@@ -130,8 +129,11 @@ struct kthread* elf_load_file(void *file)
         sf[Spdindex].rw = 1;
         sf[Spdindex].user = 1;
         current -= 0x400000;
-        return init_task(sf,esp,hdr->e_entry,0,1);
-        //jump_usermode(hdr->e_entry,virt_to_phys(sf),esp);
+        if(scheduler_enabled)
+        {
+        return init_task(virt_to_phys(sf),esp,hdr->e_entry,0,1);
+        }
+        jump_usermode(hdr->e_entry,virt_to_phys(sf),esp);
     case ET_REL:
         kprintf("os isnt suporrting relocation!");
         return (struct kthread* )0;

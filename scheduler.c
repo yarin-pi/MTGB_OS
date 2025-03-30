@@ -1,6 +1,7 @@
 #include "scheduler.h"
 #include "vm.h"
 #include "gdt.h"
+#include "print.h"
 volatile uint32_t time_since_boot = 0;
 struct kthread* current_task_TCB = 0;
 struct kthread* first_ready = 0;
@@ -74,15 +75,16 @@ void switch_to_task_wrapper(struct kthread* task)
     switch_to_task(task); 
     if(task->isUser)
     {
-        jump_usermode(task->eip,virt_to_phys(task->cr3),task->stack);
+        jump_usermode(task->eip,task->cr3,task->stack);
     }
     else
     {
-        JUMP_TO(task->eip);
+        JUMP_TO(HIGHER_HALF(task->eip));
     }
 
 }
 void kernel_idle_task(void) {
+    asm volatile("sti");
     for(;;) {
         asm volatile("hlt");
     }
@@ -152,7 +154,22 @@ void schedule(void)
 }
 void block_task(int reason) {
     lock_scheduler();
-    current_task_TCB->s = reason;
+    current_task_TCB->s = reason;        
+    
+    if(reason == BLOCKED)
+    {
+        if (!first_sleep){
+            first_sleep = current_task_TCB;
+        }
+        struct kthread* curr = first_sleep;
+        while(curr->next)
+        {
+            curr = curr->next;
+        }
+        curr->next = current_task_TCB;
+        current_task_TCB->next = 0;
+    }
+
     schedule();
     unlock_scheduler();
 }
@@ -167,8 +184,13 @@ void unblock_task(struct kthread * task) {
     } else {
         // There's at least one task on the "ready to run" queue already, so don't pre-empt
 
-        last_ready->next = task;
-        last_ready = task;
+        struct kthread* curr = first_ready;
+        while(curr->next)
+        {
+            curr = curr->next;
+        }
+        curr->next = task;
+        task->next = 0;
     }
     unlock_scheduler();
 }
@@ -181,8 +203,17 @@ void terminate_task(void)
     lock_scheduler();
     current_task_TCB->next = first_terminated;
     first_terminated = current_task_TCB;
+    struct kthread* curr = first_ready;
+    while(curr->next != 0)
+    {
+        if(curr->next == current_task_TCB)
+        {
+            curr->next = current_task_TCB->next;
+        }
+        curr = curr->next;
+    }
     unlock_scheduler();
-
+    
     block_task(TERMINATED);
 
     unblock_task(cleaner_task);
