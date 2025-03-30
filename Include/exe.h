@@ -150,7 +150,6 @@ typedef struct elf_header
 
 // Program Header structure (used to describe memory layout)
 
-
 // Function declarations
 uint32_t validate_elf(ELFHeader *header);
 SectionHeader *elf_sheader(ELFHeader *hdr);
@@ -158,9 +157,8 @@ SectionHeader *elf_section(ELFHeader *hdr, int idx);
 uint32_t elf_load_stage1(ELFHeader *hdr);
 uint32_t elf_load_stage2(ELFHeader *hdr);
 
-
-page_directory_entry_t* parse_program_headers(ELFHeader *hdr);
-void *elf_load_file(void *file);
+page_directory_entry_t *parse_program_headers(ELFHeader *hdr);
+struct kthread *elf_load_file(void *file);
 void *elf_load_rel(ELFHeader *hdr);
 uint32_t elf_do_reloc(ELFHeader *hdr, Elf32_Rel *rel, SectionHeader *reltab);
 void *elf_lookup_symbol(const char *name, ELFHeader *hdr);

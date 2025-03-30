@@ -8,6 +8,8 @@ typedef unsigned long long uint64_t;
 void reverse(char str[], int length);
 char *int_to_string(uint32_t num, char *str, int base);
 void outl(uint16_t port, uint32_t value);
+extern uint8_t scheduler_enabled;
+extern uint32_t time_slice_remaining;
 
 typedef enum
 {
@@ -21,8 +23,10 @@ typedef enum
     READY,
     RUNNING,
     BLOCKED,
-    TERMINATED
+    TERMINATED,
+    WAITING_FOR_LOCK
 } state;
+
 struct interrupt_frame
 {
     uint32_t ip;

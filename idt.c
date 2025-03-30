@@ -22,12 +22,11 @@ void init_idt()
 __attribute__((interrupt, target("general-regs-only"))) void unhandled_interrupt_handler(struct interrupt_frame *frame)
 {
     // Print an error message or halt the system
-    print("Unhandled interrupt! ");
-    print_int(frame->ip,16);
+    // print("Unhandled interrupt! ");
+    // print_int(frame->ip,16);
     outb(PIC1_COMMAND, PIC_EOI);
 }
 void load_idt()
 {
     asm volatile("lidt (%0)" : : "r"(&idt_descriptor));
 }
-

@@ -21,11 +21,6 @@ void process_input(const char *input)
         while (1)
             ;
     }
-    else if (strcmp(input, "tick", 5) == 0)
-    {
-        vprint("\n");
-        vprint_int(return_tick(), 10);
-    }
     else if (strcmp(input, "load ", 5) == 0)
     {
         char *name = input + 5;

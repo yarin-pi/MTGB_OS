@@ -1,194 +1,319 @@
 #include "scheduler.h"
 #include "vm.h"
-static struct kprocess *run_queue = 0;
-static struct kprocess *wait_queue = 0;
-static struct kthread *cur_thread = 0;
-static struct kprocess *cur_process = 0;
-
-static uint32_t next_pid = 1;
+#include "gdt.h"
+#include "print.h"
+volatile uint32_t time_since_boot = 0;
+struct kthread *current_task_TCB = 0;
+struct kthread *first_ready = 0;
+struct kthread *last_ready = 0;
+struct kthread *first_sleep = 0;
+struct kthread *first_terminated = 0;
+struct kthread *cleaner_task = 0;
 static uint32_t next_tid = 1;
 
-static int scheduler_enabled = 0;
-
-void scheduler_init(void)
+uint32_t IRQ_disable_counter = 0;
+uint32_t postpone_task_switches_counter = 0;
+uint32_t task_switches_postponed_flag = 0;
+void init_scheduler(void)
 {
-    cur_process = init_task();
-    cur_thread = create_thread(cur_process, 0);
-    cur_thread->stack = 0;
-    switch_thread(cur_thread, cur_thread);
-    cur_thread->s = RUNNING;
-    scheduler_enabled = 1;
+    cleaner_task = init_task(page_directory, get_esp(), cleaner_t, 0, 0);
+    last_ready = init_task(page_directory, get_esp(), kernel_idle_task, 1, 0);
 }
 
-void scheduler_next(void)
+struct kthread *init_task(uint32_t *vir_cr3, uint32_t *stack, uint32_t *entry_point, int isIdle, int isUser)
 {
-    if (scheduler_enabled == 0)
-        return;
-
-    if (run_queue == 0)
-        return;
-
-    struct kthread *thread = cur_thread;
-    struct kprocess *proc = cur_process;
-
-    update_time_slice();
-
-    if (cur_thread->timeSlice == 0)
-    {
-        schedule_thread(cur_thread);
-        cur_thread = run_queue;
-        run_queue = run_queue->next;
-        cur_thread->next = 0;
-        cur_thread->s = RUNNING;
-        switch_thread(thread, cur_thread);
-    }
-}
-
-void schedule_thread(struct kthread *thread)
-{
-    if (run_queue == 0)
-    {
-        run_queue = thread;
-        return;
-    }
-
-    struct kthread *temp = run_queue;
-    while (temp->next != 0)
-        temp = temp->next;
-    temp->next = thread;
+    struct kthread *thread = (struct kthread *)kalloc(sizeof(struct kthread));
+    thread->cr3 = vir_cr3;
+    thread->eip = entry_point;
+    thread->stack_top = stack;
+    thread->stack = stack;
     thread->s = READY;
-}
-
-void update_time_slice(void)
-{
-    if (cur_thread != 0)
+    thread->isUser = isUser;
+    if (isIdle)
     {
-        if (cur_thread->timeSlice > 0)
+        thread->tid = 333;
+    }
+    else
+    {
+        thread->tid = next_tid++;
+    }
+    struct kthread *curr = first_ready;
+    if (!first_ready)
+    {
+        first_ready = thread;
+    }
+    else
+    {
+        while (curr->next)
         {
-            cur_thread->timeSlice--;
+            curr = curr->next;
         }
-        else
-        {
-            reset_time_slice(cur_thread);
-        }
+        curr->next = thread;
     }
 
-    if (cur_process != 0)
-    {
-        if (cur_process->timeSlice > 0)
-        {
-            cur_process->timeSlice--;
-        }
-        else
-        {
-            cur_process->timeSlice = 10;
-        }
-    }
-}
-
-void reset_time_slice(struct kthread *thread)
-{
-    thread->timeSlice = 5;
-    schedule_thread(thread);
-}
-
-struct kprocess *init_task(void)
-{
-    struct kprocess *proc = kalloc(sizeof(struct kprocess));
-    if (!proc)
-        return 0;
-
-    proc->pid = next_pid++;
-    proc->num_threads = 0;
-    proc->timeSlice = 10;
-    proc->s = READY;
-    proc->next = 0;
-    return proc;
-}
-
-void destroy_process(struct kprocess *proc)
-{
-    if (!proc)
-        return;
-
-    // Destroy child processes first
-    struct kprocess *child = proc->children;
-    while (child)
-    {
-        struct kprocess *next = child->next;
-        destroy_process(child);
-        child = next;
-    }
-
-    for (uint32_t i = 0; i < proc->num_threads; i++)
-    {
-        destroy_thread(proc->threads[i]);
-    }
-
-    kfree(proc, sizeof(struct kprocess));
-}
-
-struct kthread *create_thread(struct kprocess *proc, void *entry)
-{
-    struct kthread *thread = kalloc(sizeof(struct kthread));
-    if (!thread)
-        return 0;
-
-    thread->tid = next_tid++;
-    thread->parent_pid = proc ? proc->pid : 0;
-    thread->timeSlice = 5;
-    thread->stack = kalloc(4096);
-    thread->s = READY;
-    thread->next = 0;
-    thread->arg = entry;
-
-    if (proc)
-    {
-        proc->threads[proc->num_threads++] = thread;
-    }
-
-    schedule_thread(thread);
     return thread;
 }
-
-void destroy_thread(struct kthread *thread)
+void switch_to_task_wrapper(struct kthread *task)
 {
-    if (!thread)
+    asm volatile("cli");
+    if (postpone_task_switches_counter != 0)
+    {
+        task_switches_postponed_flag = 1;
         return;
-
-    kfree(thread->stack, 4096);
-    kfree(thread, sizeof(struct kthread));
+    }
+    if (task->tid == 333)
+    {
+        time_slice_remaining = 0;
+    }
+    else
+    {
+        time_slice_remaining = TIME_SLICE_LENGTH;
+    }
+    switch_to_task(task);
+    if (task->isUser)
+    {
+        jump_usermode(task->eip, task->cr3, task->stack);
+    }
+    else
+    {
+        JUMP_TO(HIGHER_HALF(task->eip));
+    }
+}
+void kernel_idle_task(void)
+{
+    asm volatile("sti");
+    for (;;)
+    {
+        asm volatile("hlt");
+    }
+}
+void lock_scheduler(void)
+{
+    asm volatile("cli");
+    IRQ_disable_counter++;
 }
 
-void switch_thread(struct kthread *old, struct kthread *new)
+void unlock_scheduler(void)
 {
-    if (old == new)
-        return;
-
-    __asm__ volatile(
-        "movl %0, %%esp\n"
-        :
-        : "r"(new->stack));
-
-    cur_thread = new;
+    IRQ_disable_counter--;
+    if (IRQ_disable_counter == 0)
+    {
+        asm volatile("sti");
+    }
 }
 
-struct kprocess *fork_process(struct kprocess *parent)
+void lock_stuff(void)
 {
-    struct kprocess *child = kalloc(sizeof(struct kprocess));
-    if (!child)
-        return 0;
+    asm volatile("cli");
+    IRQ_disable_counter++;
+    postpone_task_switches_counter++;
+}
+void unlock_stuff(void)
+{
 
-    child->pid = next_pid++;
-    child->num_threads = 0;
-    child->timeSlice = parent->timeSlice;
-    child->s = READY;
-    child->next = 0;
-    child->parent = parent; // Assign parent process
+    postpone_task_switches_counter--;
+    if (postpone_task_switches_counter == 0)
+    {
+        if (task_switches_postponed_flag != 0)
+        {
+            task_switches_postponed_flag = 0;
+            schedule();
+        }
+    }
+    IRQ_disable_counter--;
+    if (IRQ_disable_counter == 0)
+    {
+        asm volatile("sti");
+    }
+}
 
-    // Add to parent's child list
-    child->children = parent->children;
-    parent->children = child;
+void schedule(void)
+{
+    if (postpone_task_switches_counter != 0)
+    {
+        task_switches_postponed_flag = 1;
+        return;
+    }
+    if (first_ready != 0)
+    {
+        struct kthread *task = first_ready;
+        first_ready = task->next;
+        if (task->tid == 333)
+        {
+            struct kthread *idle = task;
+            if (first_ready != 0)
+            {
+                task = first_ready;
+                idle->next = task->next;
+                first_ready = idle;
+            }
+            else if (current_task_TCB->s == RUNNING)
+            {
+                return;
+            }
+            else
+            {
+            }
+        }
 
-    return child;
+        switch_to_task_wrapper(task);
+    }
+}
+void block_task(int reason)
+{
+    lock_scheduler();
+    current_task_TCB->s = reason;
+
+    if (reason == BLOCKED)
+    {
+        if (!first_sleep)
+        {
+            first_sleep = current_task_TCB;
+        }
+        struct kthread *curr = first_sleep;
+        while (curr->next)
+        {
+            curr = curr->next;
+        }
+        curr->next = current_task_TCB;
+        current_task_TCB->next = 0;
+    }
+
+    schedule();
+    unlock_scheduler();
+}
+
+void unblock_task(struct kthread *task)
+{
+    lock_scheduler();
+    if ((first_ready == 0) || (current_task_TCB->tid == 333))
+    {
+
+        // Only one task was running before, so pre-empt
+
+        switch_to_task_wrapper(task);
+    }
+    else
+    {
+        // There's at least one task on the "ready to run" queue already, so don't pre-empt
+
+        struct kthread *curr = first_ready;
+        while (curr->next)
+        {
+            curr = curr->next;
+        }
+        curr->next = task;
+        task->next = 0;
+    }
+    unlock_scheduler();
+}
+
+void terminate_task(void)
+{
+
+    lock_stuff();
+
+    lock_scheduler();
+    current_task_TCB->next = first_terminated;
+    first_terminated = current_task_TCB;
+    struct kthread *curr = first_ready;
+    while (curr->next != 0)
+    {
+        if (curr->next == current_task_TCB)
+        {
+            curr->next = current_task_TCB->next;
+        }
+        curr = curr->next;
+    }
+    unlock_scheduler();
+
+    block_task(TERMINATED);
+
+    unblock_task(cleaner_task);
+}
+void cleaner_t(void)
+{
+    struct kthread *task;
+    lock_stuff();
+    while (first_terminated != 0)
+    {
+        task = first_terminated;
+        first_terminated = task->next;
+        clean_up_terminated_task(task);
+    }
+    block_task(BLOCKED);
+    unlock_stuff();
+}
+void clean_up_terminated_task(struct kthread *task)
+{
+    if (task->isUser)
+    {
+        kfree(task->cr3, 4);
+    }
+    kfree(task, sizeof(struct kthread));
+}
+SEMAPHORE *create_semaphore(int max_count)
+{
+    SEMAPHORE *semaphore;
+    semaphore = kalloc(sizeof(SEMAPHORE));
+    if (semaphore != 0)
+    {
+        semaphore->max_count = max_count;
+        semaphore->current_count = 0;
+        semaphore->first_waiting_task = 0;
+        semaphore->last_waiting_task = 0;
+    }
+}
+SEMAPHORE *create_mutex(void)
+{
+    return create_semaphore(1);
+}
+
+void acquire_semaphore(SEMAPHORE *semaphore)
+{
+    lock_stuff();
+    if (semaphore->current_count < semaphore->max_count)
+    {
+        semaphore->current_count++;
+    }
+    else
+    {
+        current_task_TCB->next = 0;
+        if (semaphore->first_waiting_task == 0)
+        {
+            semaphore->first_waiting_task = current_task_TCB;
+        }
+        else
+        {
+            semaphore->last_waiting_task->next = current_task_TCB;
+        }
+        semaphore->last_waiting_task = current_task_TCB;
+        block_task(WAITING_FOR_LOCK);
+    }
+    unlock_stuff();
+}
+void acquire_mutex(SEMAPHORE *semaphore)
+{
+    acquire_semaphore(semaphore);
+}
+
+void release_semaphore(SEMAPHORE *semaphore)
+{
+    lock_stuff();
+    if (semaphore->first_waiting_task != 0)
+    {
+        struct kthread *task = semaphore->first_waiting_task;
+        semaphore->first_waiting_task = task->next;
+        unblock_task(task);
+    }
+    else
+    {
+        semaphore->current_count--;
+    }
+    unlock_stuff();
+}
+
+void release_mutex(SEMAPHORE *semaphore)
+{
+    release_semaphore(semaphore);
 }

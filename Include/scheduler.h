@@ -2,19 +2,26 @@
 #define SCHEDULER_H
 #include "std.h"
 #define MAX_THREADS 32
+#define TIME_SLICE_LENGTH 10
+#define JUMP_TO(address) \
+    asm volatile("jmp *%0" ::"r"(address))
 struct kthread
 {
+    void *cr3;
     state s;
     uint32_t *stack;
+    uint32_t stack_top;
+    uint32_t *eip;
     uint32_t tid;
-    uint32_t parent_pid;
-    uint32_t timeSlice;
+    uint32_t isUser;
+    uint32_t sleep_expiry;
+    uint32_t time_slice;
     struct kthread *next;
-    void *arg;
 };
 
 struct kprocess
 {
+    void *arg;
     state s;
     uint32_t pid;
     uint32_t num_threads;
@@ -23,22 +30,35 @@ struct kprocess
     struct kthread *threads[MAX_THREADS];
     struct kprocess *parent;
     struct kprocess *children; // Pointer to child processes
-    void *arg;
 };
 
-// Scheduler functions
-void scheduler_init(void);
-void scheduler_next(void);
-void schedule_thread(struct kthread *thread);
-void switch_thread(struct kthread *old, struct kthread *new);
-struct kprocess *init_task(void);
-void destroy_process(struct kprocess *proc);
-
-// Thread management functions
-struct kthread *create_thread(struct kprocess *proc, void *entry);
-void destroy_thread(struct kthread *thread);
-void update_time_slice(void); // Function to update time slice for threads and processes
-void reset_time_slice(struct kthread *thread);
-struct kprocess *fork_process(struct kprocess *parent);
+typedef struct
+{
+    int max_count;
+    int current_count;
+    struct kthread *first_waiting_task;
+    struct kthread *last_waiting_task;
+} SEMAPHORE;
+extern volatile uint32_t time_since_boot;
+extern struct kthread *first_terminated;
+extern struct kthread *first_ready;
+void init_scheduler(void);
+struct kthread *init_task(uint32_t *phy_cr3, uint32_t *stack, uint32_t *entry_point, int isIdle, int isUser);
+extern void switch_to_task(struct kthread *tcb);
+extern struct kthread *current_task_TCB;
+extern struct kthread *first_sleep;
+extern struct kthread *last_sleep;
+extern uint32_t postpone_task_switches_counter;
+extern uint32_t task_switches_postponed_flag;
+void lock_stuff(void);
+void kernel_idle_task(void);
+void cleaner_t(void);
+void unlock_stuff(void);
+void lock_scheduler(void);
+void unlock_scheduler(void);
+void block_task(int reason);
+void terminate_task(void);
+void unblock_task(struct kthread *task);
+void schedule(void);
 
 #endif SCHEDULER_H

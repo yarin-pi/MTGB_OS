@@ -1,5 +1,5 @@
+#include "scheduler.h"
 #include "exe.h"
-
 
 #define NULL 0
 uint32_t validate_elf(ELFHeader *header)
@@ -54,24 +54,22 @@ uint32_t validate_elf(ELFHeader *header)
     return TRUE;
 }
 
-page_directory_entry_t* parse_program_headers(ELFHeader *hdr)
+page_directory_entry_t *parse_program_headers(ELFHeader *hdr)
 {
     if (hdr->e_phoff == 0 || hdr->e_phnum == 0)
     {
         print("No program headers found.\n");
         return;
     }
-    init_palloc();
-    page_directory_entry_t* n_pd = create_page_directory();
-    switch_page_directory(virt_to_phys(n_pd)); 
+    page_directory_entry_t *n_pd = create_page_directory();
+    switch_page_directory(virt_to_phys(n_pd));
     ProgramHeader *ph = (ProgramHeader *)((char *)hdr + hdr->e_phoff);
 
-    for (int i = 0; i < hdr->e_phnum;i++)
+    for (int i = 0; i < hdr->e_phnum; i++)
     {
-        if(ph[i].p_type == PT_LOAD)
+        if (ph[i].p_type == PT_LOAD)
         {
-            palloc(&ph[i],(void*)hdr,n_pd);
-            
+            palloc(&ph[i], (void *)hdr, n_pd);
         }
     }
     return n_pd;
@@ -97,7 +95,7 @@ void *elf_load_rel(ELFHeader *hdr)
 }
 uint32_t k_stack;
 uint32_t current = 0xf0000000 - 0x400000 - 0xf;
-void *elf_load_file(void *file)
+struct kthread *elf_load_file(void *file)
 {
     ELFHeader *hdr = (ELFHeader *)file;
     if (!validate_elf(hdr))
@@ -116,22 +114,27 @@ void *elf_load_file(void *file)
         uint32_t esp = current;
         uint32_t heap = 0x08048000;
         k_stack = get_esp();
-        page_directory_entry_t* sf = parse_program_headers(hdr);
+        page_directory_entry_t *sf = parse_program_headers(hdr);
         unsigned long Hpdindex = heap >> 22;
         sf[Hpdindex].page_size = 1;
         sf[Hpdindex].present = 1;
         sf[Hpdindex].rw = 1;
         sf[Hpdindex].user = 1;
-        sf[Hpdindex].table_addr = (uint32_t)balloc(&pbud,0x1000,1) >> 12;
+        sf[Hpdindex].table_addr = (uint32_t)balloc(&pbud, 0x1000, 1) >> 12;
         unsigned long Spdindex = (esp >> 22);
         sf[Spdindex].page_size = 1;
         sf[Spdindex].present = 1;
         sf[Spdindex].rw = 1;
         sf[Spdindex].user = 1;
         current -= 0x400000;
-        jump_usermode(hdr->e_entry,virt_to_phys(sf),esp);
+        if (scheduler_enabled)
+        {
+            return init_task(virt_to_phys(sf), esp, hdr->e_entry, 0, 1);
+        }
+        jump_usermode(hdr->e_entry, virt_to_phys(sf), esp);
     case ET_REL:
-        return elf_load_rel(hdr);
+        kprintf("os isnt suporrting relocation!");
+        return (struct kthread *)0;
     }
     return 0;
 }

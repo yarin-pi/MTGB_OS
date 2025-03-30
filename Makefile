@@ -1,6 +1,7 @@
-# Define the compiler and linker
+# Define the compiler, assembler, and linker
 CC = i686-elf-gcc
 LD = i686-elf-ld
+NASM = nasm  # Use NASM as the assembler
 
 # Compiler flags
 CFLAGS = -ffreestanding -Wall -w -Wextra -I./Include -g -gdwarf-4 
@@ -9,11 +10,12 @@ CFLAGS = -ffreestanding -Wall -w -Wextra -I./Include -g -gdwarf-4
 LDFLAGS_BIN = -T linker.ld --oformat=binary
 LDFLAGS_ELF = -T linker2.ld
 
-# List of source files
+# List of source and assembly files
 SRCS = $(wildcard *.c)
+ASMS = switch_task.asm  # Add your NASM assembly file here
 
 # Ensure kl.c is the first object file
-OBJS = kl.o $(filter-out kl.o, $(SRCS:.c=.o))
+OBJS = kl.o $(filter-out kl.o, $(SRCS:.c=.o)) $(ASMS:.asm=.o)
 
 # Output file names
 OUTPUT_BIN = kernel.bin
@@ -33,6 +35,10 @@ $(OUTPUT_ELF): $(OBJS)
 # Pattern rule for compiling .c files to .o files
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
+
+# Rule for assembling .asm files to .o files using NASM
+%.o: %.asm
+	$(NASM) -f elf -o $@ $<  
 
 # Clean up generated files
 clean:

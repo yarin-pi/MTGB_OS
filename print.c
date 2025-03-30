@@ -10,7 +10,42 @@
 
 uint16_t *vga_buffer = (uint16_t *)VGA_BUFFER; // VGA buffer pointer
 uint8_t cursor_x = 0;                          // Current cursor position (x)
-uint8_t cursor_y = 0;                          // Current cursor position (y)
+uint8_t cursor_y = 0;
+// Current cursor position (y)
+void kprintf(const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+
+    while (*fmt)
+    {
+        if (*fmt == '%' && *(fmt + 1) == 'd')
+        {
+            int num = va_arg(args, int);
+            vprint_int(num, 10);
+            fmt++;
+        }
+        if (*fmt == '%' && *(fmt + 1) == 's')
+        {
+            const char *str = va_arg(args, char *);
+            vprint(str);
+            fmt++;
+        }
+        if (*fmt == '%' && *(fmt + 1) == 'p')
+        {
+            int ptr = va_arg(args, int);
+            vprint_int(ptr, 16);
+            fmt++;
+        }
+        else
+        {
+            vprint_char(*fmt);
+        }
+        fmt++;
+    }
+    va_end(args);
+}
+
 void clear_screen()
 {
     draw_background(0);

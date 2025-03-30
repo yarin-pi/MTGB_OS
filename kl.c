@@ -76,6 +76,7 @@ int _start()
     char *arrxe = (char *)kalloc(0x24a8);
     getContent("/simple.elf", (void *)arrxe);
     enable_keyboard_interrupt();
+    init_palloc();
     clock_init();
     init_framebuffer();
     clear_screen();
