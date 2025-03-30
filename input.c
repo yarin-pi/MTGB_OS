@@ -37,22 +37,29 @@ void process_input(const char *input)
     {
         vprint("\nMissing parameters error: filename is needed");
     }
-    else if (strcmp(input, "bgcolor ", 5) == 0)
+    else if (strcmp(input, "bgcolor ", 8) == 0)
     {
-        uint32_t c = str_to_int(input + 5);
+        uint32_t c = str_to_int(input + 8);
         switch (c)
         {
         case 1:
             draw_background(0x00FF0000);
+            vesa_set_cursor(0, 0);
+
             break;
         case 2:
             draw_background(0x0000FF00);
+            vesa_set_cursor(0, 0);
+
             break;
         case 3:
             draw_background(0x000000FF);
+            vesa_set_cursor(0, 0);
+
             break;
         default:
             draw_background(0);
+            vesa_set_cursor(0, 0);
             break;
         }
     }
