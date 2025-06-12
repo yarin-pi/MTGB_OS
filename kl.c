@@ -85,10 +85,10 @@ int _start()
     // elf_load_file(arrxe);
     map_page(0xD0000000, 0x20000, 0, page_table);
     vprint("mapping page:\nphysical address: 0xD0000000\nvirtual address: 0x20000");
-    vprint("checking if it worked: ");
+    vprint("\nchecking if it worked: ");
     vprint("the physical address of 0x20000 is:\n");
     vprint_int(virt_to_phys(0x20000), 16);
-    
+
     return 0;
 }
 void MoveHigherHalf()
